@@ -1,0 +1,20 @@
+{
+  "infrastructureProfile": "bh-infra",
+  "targetProfile": "bh-fred-sandbox",
+  "distributionPrefix": "hellospa",
+  "targetRegion": "us-east-1",
+  "targetVpcId": "vpc-0f59afe5908b84a1a",
+  "targetAccountId": "415730361381",
+  "infrastructureAccountId": "953082249352",
+  "distributionId": "E3Q3IZJ1UV53QK",
+  "distributionUrl": "https://d3vg033g49esvn.cloudfront.net",
+  "bucketName": "hellospa-content-415730361381",
+  "certificateArn": "arn:aws:acm:us-east-1:415730361381:certificate/ccb55cf0-2900-448b-8abe-30e127819805",
+  "domains": [
+  "sbx.briskhaven.com",
+  "www.sbx.briskhaven.com"
+],
+  "timestamp": "2025-07-24T12:47:39Z",
+  "stageAReady": true,
+  "stageBReady": true
+}

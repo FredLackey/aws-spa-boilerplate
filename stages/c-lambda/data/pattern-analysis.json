@@ -1,0 +1,279 @@
+{
+  "analysisTimestamp": "2025-07-24T00:00:00Z",
+  "stagesAnalyzed": ["a-cloudfront", "b-ssl"],
+  "patterns": {
+    "scriptStructure": {
+      "mainScriptPattern": {
+        "description": "Main orchestration scripts (go-{stage}.sh) follow consistent pattern",
+        "structure": [
+          "Script header with set -euo pipefail",
+          "Directory path setup (SCRIPT_DIR, DATA_DIR, SCRIPTS_DIR, IAC_DIR)",
+          "show_usage() function with examples",
+          "Command line argument parsing and validation",
+          "validate_helper_scripts() to check prerequisites",
+          "Progress tracking functions (show_progress, execute_step)",
+          "Error handling functions (handle_script_error)",
+          "Step completion checking (is_step_completed, should_skip_step)",
+          "CloudFront status checking (check_cloudfront_status)",
+          "Main deployment orchestration with 5 sequential steps",
+          "Final summary display (show_deployment_summary)",
+          "Interrupt handling (cleanup_on_interrupt)"
+        ],
+        "stepPattern": [
+          "1. gather-inputs.sh - Collect deployment configuration",
+          "2. aws-discovery.sh - Validate AWS access and discover resources",
+          "3. deploy-infrastructure.sh - Deploy CDK infrastructure",
+          "4. deploy-{specific}.sh - Deploy stage-specific resources",
+          "5. validate-deployment.sh - Test and validate deployment"
+        ]
+      },
+      "childScriptPattern": {
+        "description": "Child scripts follow consistent structure and naming",
+        "commonStructure": [
+          "#!/bin/bash header with set -euo pipefail",
+          "Directory path setup relative to script location",
+          "Data directory creation (mkdir -p \"$DATA_DIR\")",
+          "Function definitions for specific tasks",
+          "Main execution function",
+          "Script sourcing check at end"
+        ],
+        "gatherInputsPattern": {
+          "purpose": "Collect and validate user inputs",
+          "structure": [
+            "Command line argument parsing with validation",
+            "AWS profile validation and SSO handling",
+            "Input format validation (kebab-case, FQDN, etc.)",
+            "Stage prerequisite checking",
+            "Save validated inputs to inputs.json"
+          ]
+        },
+        "awsDiscoveryPattern": {
+          "purpose": "Validate AWS access and discover existing resources",
+          "structure": [
+            "Load inputs from inputs.json",
+            "Validate AWS credentials for all profiles",
+            "Get AWS account IDs",
+            "Check for resource conflicts",
+            "Discover existing resources (Route53 zones, certificates, etc.)",
+            "Save discovery results to discovery.json"
+          ]
+        },
+        "deployInfrastructurePattern": {
+          "purpose": "Deploy CDK infrastructure",
+          "structure": [
+            "Validate prerequisites (inputs.json, discovery.json)",
+            "Generate CDK context from data files",
+            "Execute CDK deployment with proper profile",
+            "Process CDK outputs",
+            "Save processed outputs to cdk-stack-outputs.json"
+          ]
+        },
+        "validateDeploymentPattern": {
+          "purpose": "Test deployment and generate final outputs",
+          "structure": [
+            "Load all data files",
+            "Test HTTP/HTTPS connectivity with retries",
+            "Validate content and functionality",
+            "Generate comprehensive outputs.json for next stage",
+            "Mark stage as ready for next stage"
+          ]
+        },
+        "cleanupRollbackPattern": {
+          "purpose": "Handle cleanup and rollback procedures",
+          "structure": [
+            "Extract cleanup information from data files",
+            "Prompt for confirmation",
+            "Clean up AWS resources (CDK destroy, manual cleanup)",
+            "Clean up data files",
+            "Verify cleanup completion"
+          ]
+        }
+      }
+    },
+    "namingConventions": {
+      "scripts": {
+        "mainScript": "go-{stage}.sh",
+        "statusScript": "status-{stage}.sh", 
+        "undoScript": "undo-{stage}.sh",
+        "childScripts": [
+          "gather-inputs.sh",
+          "aws-discovery.sh", 
+          "deploy-infrastructure.sh",
+          "deploy-{stage-specific}.sh",
+          "validate-deployment.sh",
+          "cleanup-rollback.sh"
+        ]
+      },
+      "directories": {
+        "stageDir": "stages/{stage-name}/",
+        "dataDir": "stages/{stage-name}/data/",
+        "scriptsDir": "stages/{stage-name}/scripts/",
+        "iacDir": "stages/{stage-name}/iac/"
+      },
+      "dataFiles": {
+        "inputs": "inputs.json",
+        "discovery": "discovery.json", 
+        "cdkOutputs": "cdk-outputs.json",
+        "cdkStackOutputs": "cdk-stack-outputs.json",
+        "finalOutputs": "outputs.json"
+      },
+      "cdkResources": {
+        "stackNaming": "Stage{X}{Purpose}Stack (e.g. StageACloudFrontStack, StageBSslCertificateStack)",
+        "contextKeys": "stage-{stage}-{purpose}:{property}",
+        "outputExportNames": "{prefix}-{resource}-{property}"
+      }
+    },
+    "dataManagement": {
+      "inputsJsonStructure": {
+        "stageA": [
+          "infrastructureProfile",
+          "targetProfile", 
+          "distributionPrefix",
+          "targetRegion",
+          "targetVpcId"
+        ],
+        "stageB": [
+          "domains (array)",
+          "infraProfile",
+          "targetProfile",
+          "infraAccountId",
+          "targetAccountId", 
+          "distributionId",
+          "distributionUrl",
+          "bucketName",
+          "targetRegion",
+          "timestamp",
+          "stageAReady"
+        ]
+      },
+      "discoveryJsonStructure": {
+        "common": [
+          "infrastructureProfile/infraProfile",
+          "targetProfile", 
+          "infrastructureAccountId/infraAccountId",
+          "targetAccountId",
+          "targetRegion",
+          "timestamp/discoveryTimestamp",
+          "validationStatus"
+        ],
+        "stageSpecific": {
+          "stageA": ["distributionPrefix", "resourcesValidated", "conflictsChecked"],
+          "stageB": ["domains", "hostedZones", "certificateRegion"]
+        }
+      },
+      "outputsJsonStructure": {
+        "pattern": "Dual structure with nested stage data and root-level data",
+        "nestedSection": "stage{X}: { ... stage-specific outputs ... }",
+        "rootLevel": "Flattened key outputs for easy access by next stage",
+        "commonFields": [
+          "deploymentTimestamp",
+          "validationStatus", 
+          "readyForStage{Next}"
+        ]
+      },
+      "dataFlow": {
+        "description": "Data flows through stages via outputs.json",
+        "pattern": [
+          "Stage N outputs.json → Stage N+1 inputs.json (via gather-inputs.sh)",
+          "Each stage validates previous stage completion",
+          "Stage outputs include all necessary data for next stage"
+        ]
+      }
+    },
+    "errorHandling": {
+      "scriptLevel": {
+        "bashSettings": "set -euo pipefail for strict error handling",
+        "exitCodes": "Non-zero exit codes for all error conditions",
+        "errorFunctions": "handle_script_error() with specific guidance per script"
+      },
+      "stepLevel": {
+        "completion": "is_step_completed() checks for successful completion",
+        "skipping": "Steps can be skipped if already completed",
+        "rollback": "CDK handles automatic rollback on infrastructure failures"
+      },
+      "userGuidance": {
+        "pattern": "Specific troubleshooting steps provided for each error type",
+        "options": "Clear options provided: retry, debug, cleanup",
+        "recovery": "Recovery instructions in cleanup scripts"
+      }
+    },
+    "awsProfileUsage": {
+      "profileTypes": {
+        "infrastructureProfile": "For centralized resources (Route53, shared services)",
+        "targetProfile": "For environment-specific resources (S3, CloudFront, Lambda)"
+      },
+      "profileValidation": {
+        "existence": "Check profile exists in AWS config",
+        "credentials": "Test with aws sts get-caller-identity",
+        "ssoHandling": "Automatic SSO login retry on token expiration"
+      },
+      "accountIdCapture": {
+        "purpose": "Account IDs captured for cross-account operations",
+        "usage": "Used in CDK context and resource ARN construction"
+      }
+    },
+    "resourceTagging": {
+      "cdkTags": {
+        "stageA": "Not explicitly shown in analyzed code",
+        "stageB": [
+          "Stage: B-SSL",
+          "Component: SSL-Certificate", 
+          "Environment: {targetAccountId}",
+          "InfrastructureAccount: {infraAccountId}",
+          "DomainCount: {count}"
+        ]
+      },
+      "namingStrategy": {
+        "buckets": "{prefix}-content-{accountId}",
+        "distributions": "{prefix} - Stage {X} {Purpose} Distribution",
+        "certificates": "stage-{stage}-ssl-{domains-joined}"
+      }
+    },
+    "cdkPatterns": {
+      "appStructure": {
+        "entryPoint": "app.ts with context value extraction",
+        "contextValidation": "Required context values validated before stack creation",
+        "stackInstantiation": "Single stack per stage with descriptive naming"
+      },
+      "stackStructure": {
+        "props": "Custom props interface extending cdk.StackProps",
+        "context": "Context values read from app.node.tryGetContext()",
+        "outputs": "CfnOutput for all values needed by subsequent stages",
+        "exports": "Named exports for cross-stack references"
+      },
+      "dependencies": {
+        "cdkVersion": "aws-cdk-lib ^2.206.0",
+        "nodeVersion": "Node.js 20+ (based on tsconfig target)",
+        "typescript": "~5.6.3"
+      }
+    }
+  },
+  "stageSpecificPatterns": {
+    "stageA": {
+      "purpose": "CloudFront distribution with S3 origin",
+      "keyResources": ["S3 Bucket", "CloudFront Distribution", "Origin Access Control"],
+      "outputs": ["distributionId", "distributionUrl", "bucketName", "bucketArn"]
+    },
+    "stageB": {
+      "purpose": "SSL certificate and CloudFront integration", 
+      "keyResources": ["ACM Certificate", "Route53 DNS validation"],
+      "outputs": ["certificateArn", "domains", "hostedZones"]
+    }
+  },
+  "stageCRecommendations": {
+    "followPatterns": [
+      "Use same 5-step deployment pattern as Stage A and B",
+      "Implement identical script structure and naming conventions",
+      "Follow data management patterns with inputs/discovery/outputs JSON files",
+      "Use consistent error handling and user guidance patterns",
+      "Implement CDK stack with same context and output patterns"
+    ],
+    "stageSpecificConsiderations": [
+      "Lambda function will need Function URL for HTTP access",
+      "CloudWatch log group with retention policy",
+      "IAM execution role for Lambda",
+      "Integration with previous stage outputs for consistent naming",
+      "AWS CLI testing for Lambda function validation instead of HTTP testing"
+    ]
+  }
+} 

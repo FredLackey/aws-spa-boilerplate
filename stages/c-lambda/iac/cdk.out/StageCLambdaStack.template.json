@@ -1,0 +1,359 @@
+{
+ "Description": "Stage C Lambda Function Stack - hellospa",
+ "Resources": {
+  "LambdaLogGroup2CA1C11F": {
+   "Type": "AWS::Logs::LogGroup",
+   "Properties": {
+    "LogGroupName": "/aws/lambda/hellospa-api",
+    "RetentionInDays": 30,
+    "Tags": [
+     {
+      "Key": "Component",
+      "Value": "Lambda-Function"
+     },
+     {
+      "Key": "DistributionPrefix",
+      "Value": "hellospa"
+     },
+     {
+      "Key": "Environment",
+      "Value": {
+       "Ref": "AWS::AccountId"
+      }
+     },
+     {
+      "Key": "Runtime",
+      "Value": "nodejs20.x"
+     },
+     {
+      "Key": "Stage",
+      "Value": "C-Lambda"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "StageCLambdaStack/LambdaLogGroup/Resource"
+   }
+  },
+  "LambdaExecutionRoleD5C26073": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ],
+    "Policies": [
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+         ],
+         "Effect": "Allow",
+         "Resource": {
+          "Fn::Join": [
+           "",
+           [
+            "arn:aws:logs:us-east-1:",
+            {
+             "Ref": "AWS::AccountId"
+            },
+            ":log-group:/aws/lambda/hellospa-api*"
+           ]
+          ]
+         }
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "CloudWatchLogsPolicy"
+     }
+    ],
+    "RoleName": "hellospa-lambda-execution-role",
+    "Tags": [
+     {
+      "Key": "Component",
+      "Value": "Lambda-Function"
+     },
+     {
+      "Key": "DistributionPrefix",
+      "Value": "hellospa"
+     },
+     {
+      "Key": "Environment",
+      "Value": {
+       "Ref": "AWS::AccountId"
+      }
+     },
+     {
+      "Key": "Runtime",
+      "Value": "nodejs20.x"
+     },
+     {
+      "Key": "Stage",
+      "Value": "C-Lambda"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "StageCLambdaStack/LambdaExecutionRole/Resource"
+   }
+  },
+  "ApiLambda91D2282D": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-415730361381-us-east-1",
+     "S3Key": "d916560443d786c4cc58b106b480ef78a8326cc3eb12787afe29360d2fba18af.zip"
+    },
+    "Description": "Stage C API Lambda Function - hellospa",
+    "Environment": {
+     "Variables": {
+      "DISTRIBUTION_PREFIX": "hellospa",
+      "TARGET_REGION": "us-east-1",
+      "DISTRIBUTION_ID": "E3Q3IZJ1UV53QK",
+      "BUCKET_NAME": "hellospa-content-415730361381"
+     }
+    },
+    "FunctionName": "hellospa-api",
+    "Handler": "index.handler",
+    "LoggingConfig": {
+     "LogGroup": {
+      "Ref": "LambdaLogGroup2CA1C11F"
+     }
+    },
+    "MemorySize": 128,
+    "Role": {
+     "Fn::GetAtt": [
+      "LambdaExecutionRoleD5C26073",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Tags": [
+     {
+      "Key": "Component",
+      "Value": "Lambda-Function"
+     },
+     {
+      "Key": "DistributionPrefix",
+      "Value": "hellospa"
+     },
+     {
+      "Key": "Environment",
+      "Value": {
+       "Ref": "AWS::AccountId"
+      }
+     },
+     {
+      "Key": "Runtime",
+      "Value": "nodejs20.x"
+     },
+     {
+      "Key": "Stage",
+      "Value": "C-Lambda"
+     }
+    ],
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "LambdaExecutionRoleD5C26073"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "StageCLambdaStack/ApiLambda/Resource",
+    "aws:asset:path": "asset.d916560443d786c4cc58b106b480ef78a8326cc3eb12787afe29360d2fba18af",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "ApiLambdaFunctionUrl727286F0": {
+   "Type": "AWS::Lambda::Url",
+   "Properties": {
+    "AuthType": "AWS_IAM",
+    "Cors": {
+     "AllowCredentials": false,
+     "AllowHeaders": [
+      "Content-Type",
+      "Authorization"
+     ],
+     "AllowMethods": [
+      "GET",
+      "POST"
+     ],
+     "AllowOrigins": [
+      "*"
+     ],
+     "MaxAge": 300
+    },
+    "TargetFunctionArn": {
+     "Fn::GetAtt": [
+      "ApiLambda91D2282D",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "StageCLambdaStack/ApiLambda/FunctionUrl/Resource"
+   }
+  },
+  "ApiLambdaInvokeFunctionUrlServicePrincipallambdaamazonawscom7E4B1F92": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunctionUrl",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ApiLambda91D2282D",
+      "Arn"
+     ]
+    },
+    "FunctionUrlAuthType": "AWS_IAM",
+    "Principal": "lambda.amazonaws.com"
+   },
+   "Metadata": {
+    "aws:cdk:path": "StageCLambdaStack/ApiLambda/InvokeFunctionUrlServicePrincipal(lambda.amazonaws.com)"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/7VS247aMBD9lp1HZFwKUivlLaDttlK3IGC1D1GEvPEQvDh25HGgaZR/r5wLZT+gT3M7c8ZzxnM+n33hswdxpWkmz1Ot3niz8yI7M3GlQ6NtTrz5afMnZ6syaUAP7i9RIEQwAQYOPRqvrIFoMQthYS9Cb6xWWQ0RSCTvbA1tylZHM1K1TImCN1urMWnAWY13jIKoKlAua4gaKJ0ymSqFjrPMVsZ/wIT+OOuHwwRaBoUwIkfZjVdIECXNh1wduwGbMlBGK4P/sH16dTSBt2VaFG9S8OZbZboZSQPHwb3fvzJe3aKTMFKjG6LMyrFQYGFdvVN/xkRostW4T5BgcEeNhxDNRTlrCrztLpEyp8q7tRsQUj7eA5MOOYH0fxU7nUZl2Oi8OH2n0niryp/2dRn2i193hx/xcyeNo3BfobW9rhzK8ImEJoiOQhOyvoDyOwqJjkaqPvmM/mRluC48Pe6BwWa920N6q6+dypUZmwrxO857ddv+3S9OB7NBVygiZU3LaHEQROiJx8EwWvBllZ3RLwVhkrZsi2Qrl2GQIGUdaOdFrkweqNaVLyvfMmMl8nf6dJnP+eevfPbwTkpNhz/Ct739CykFNTJ3AwAA"
+   },
+   "Metadata": {
+    "aws:cdk:path": "StageCLambdaStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "LambdaFunctionArn": {
+   "Description": "Lambda Function ARN",
+   "Value": {
+    "Fn::GetAtt": [
+     "ApiLambda91D2282D",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "hellospa-lambda-function-arn"
+   }
+  },
+  "LambdaFunctionName": {
+   "Description": "Lambda Function Name",
+   "Value": {
+    "Ref": "ApiLambda91D2282D"
+   },
+   "Export": {
+    "Name": "hellospa-lambda-function-name"
+   }
+  },
+  "FunctionUrl": {
+   "Description": "Lambda Function URL",
+   "Value": {
+    "Fn::GetAtt": [
+     "ApiLambdaFunctionUrl727286F0",
+     "FunctionUrl"
+    ]
+   },
+   "Export": {
+    "Name": "hellospa-lambda-function-url"
+   }
+  },
+  "LogGroupName": {
+   "Description": "CloudWatch Log Group Name",
+   "Value": {
+    "Ref": "LambdaLogGroup2CA1C11F"
+   },
+   "Export": {
+    "Name": "hellospa-lambda-log-group"
+   }
+  },
+  "TargetRegion": {
+   "Description": "Target Region for Lambda Deployment",
+   "Value": "us-east-1",
+   "Export": {
+    "Name": "hellospa-lambda-target-region"
+   }
+  },
+  "DistributionPrefix": {
+   "Description": "Distribution Prefix Used",
+   "Value": "hellospa",
+   "Export": {
+    "Name": "hellospa-lambda-prefix"
+   }
+  },
+  "DistributionId": {
+   "Description": "CloudFront Distribution ID (from previous stages)",
+   "Value": "E3Q3IZJ1UV53QK",
+   "Export": {
+    "Name": "hellospa-lambda-distribution-id"
+   }
+  },
+  "BucketName": {
+   "Description": "S3 Bucket Name (from previous stages)",
+   "Value": "hellospa-content-415730361381",
+   "Export": {
+    "Name": "hellospa-lambda-bucket-name"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

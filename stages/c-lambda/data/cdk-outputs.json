@@ -1,0 +1,12 @@
+{
+  "StageCLambdaStack": {
+    "TargetRegion": "us-east-1",
+    "FunctionUrl": "https://ljol5hyg76f3amvxxzdjfta5vi0cpqjv.lambda-url.us-east-1.on.aws/",
+    "BucketName": "hellospa-content-415730361381",
+    "LambdaFunctionArn": "arn:aws:lambda:us-east-1:415730361381:function:hellospa-api",
+    "LambdaFunctionName": "hellospa-api",
+    "DistributionId": "E3Q3IZJ1UV53QK",
+    "LogGroupName": "/aws/lambda/hellospa-api",
+    "DistributionPrefix": "hellospa"
+  }
+}

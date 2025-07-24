@@ -1,0 +1,13 @@
+{
+  "infrastructureProfile": "bh-infra",
+  "targetProfile": "bh-fred-sandbox",
+  "infrastructureAccountId": "953082249352",
+  "targetAccountId": "415730361381",
+  "targetRegion": "us-east-1",
+  "distributionPrefix": "hellospa",
+  "targetVpcId": "vpc-0f59afe5908b84a1a",
+  "lambdaServiceValidated": true,
+  "resourceConflictsChecked": true,
+  "quotasDiscovered": true,
+  "timestamp": "2025-07-24T12:47:43Z"
+}

@@ -1,0 +1,36 @@
+{
+  "version": "45.0.0",
+  "files": {
+    "d916560443d786c4cc58b106b480ef78a8326cc3eb12787afe29360d2fba18af": {
+      "displayName": "ApiLambda/Code",
+      "source": {
+        "path": "asset.d916560443d786c4cc58b106b480ef78a8326cc3eb12787afe29360d2fba18af",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "415730361381-us-east-1-a47ea25a": {
+          "bucketName": "cdk-hnb659fds-assets-415730361381-us-east-1",
+          "objectKey": "d916560443d786c4cc58b106b480ef78a8326cc3eb12787afe29360d2fba18af.zip",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::415730361381:role/cdk-hnb659fds-file-publishing-role-415730361381-us-east-1"
+        }
+      }
+    },
+    "bd1ce0671615c112babd44c9af47e696ee9ce13d4626b1604e8848576dc6a450": {
+      "displayName": "StageCLambdaStack Template",
+      "source": {
+        "path": "StageCLambdaStack.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "415730361381-us-east-1-0b27ab90": {
+          "bucketName": "cdk-hnb659fds-assets-415730361381-us-east-1",
+          "objectKey": "bd1ce0671615c112babd44c9af47e696ee9ce13d4626b1604e8848576dc6a450.json",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::415730361381:role/cdk-hnb659fds-file-publishing-role-415730361381-us-east-1"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}

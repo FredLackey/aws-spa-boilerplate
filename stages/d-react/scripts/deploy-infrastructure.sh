@@ -72,6 +72,7 @@ generate_cdk_context() {
     infrastructure_profile=$(jq -r '.infrastructureProfile' "$inputs_file")
     target_vpc_id=$(jq -r '.targetVpcId' "$inputs_file")
     distribution_id=$(jq -r '.distributionId' "$inputs_file")
+    distribution_domain_name=$(jq -r '.distributionDomainName' "$inputs_file")
     bucket_name=$(jq -r '.bucketName' "$inputs_file")
     primary_domain=$(jq -r '.primaryDomain' "$inputs_file")
     certificate_arn=$(jq -r '.certificateArn' "$inputs_file")
@@ -393,7 +394,7 @@ save_deployment_outputs() {
     lambda_function_url=$(jq -r '.lambdaFunctionUrl' "$inputs_file")
     
     # Get CloudFront distribution URL
-    local distribution_url="https://${distribution_id}.cloudfront.net"
+    local distribution_url="https://${distribution_domain_name}"
     local primary_domain_url="https://${primary_domain}"
     
     # Read invalidation ID if available

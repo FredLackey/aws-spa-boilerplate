@@ -17,16 +17,16 @@
     ]
   },
   "context": {
-    "stage-d-react:distributionPrefix": null,
-    "stage-d-react:targetRegion": null,
-    "stage-d-react:targetProfile": null,
-    "stage-d-react:infrastructureProfile": null,
-    "stage-d-react:targetAccountId": null,
-    "stage-d-react:infrastructureAccountId": null,
-    "stage-d-react:targetVpcId": null,
-    "stage-d-react:distributionId": null,
-    "stage-d-react:bucketName": null,
-    "stage-d-react:certificateArn": null,
+    "stage-d-react:distributionPrefix": "hellospa",
+    "stage-d-react:targetRegion": "us-east-1",
+    "stage-d-react:targetProfile": "bh-fred-sandbox",
+    "stage-d-react:infrastructureProfile": "bh-infra",
+    "stage-d-react:targetAccountId": "415730361381",
+    "stage-d-react:infrastructureAccountId": "953082249352",
+    "stage-d-react:targetVpcId": "vpc-0f59afe5908b84a1a",
+    "stage-d-react:distributionId": "E3Q3IZJ1UV53QK",
+    "stage-d-react:bucketName": "hellospa-content-415730361381",
+    "stage-d-react:certificateArn": "arn:aws:acm:us-east-1:415730361381:certificate/ccb55cf0-2900-448b-8abe-30e127819805",
     "stage-d-react:domains": null,
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
@@ -105,6 +105,8 @@
     "@aws-cdk/s3-notifications:addS3TrustKeyPolicyForSnsSubscriptions": true,
     "@aws-cdk/aws-ec2:requirePrivateSubnetsForEgressOnlyInternetGateway": true,
     "@aws-cdk/aws-s3:publicAccessBlockedByDefault": true,
-    "@aws-cdk/aws-lambda:useCdkManagedLogGroup": true
+    "@aws-cdk/aws-lambda:useCdkManagedLogGroup": true,
+    "stage-d-react:primaryDomain": "sbx.briskhaven.com",
+    "stage-d-react:lambdaFunctionUrl": "https://ljol5hyg76f3amvxxzdjfta5vi0cpqjv.lambda-url.us-east-1.on.aws/"
   }
-} 
+}

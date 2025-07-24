@@ -318,7 +318,7 @@ main() {
     check_s3_bucket "$target_profile" "$bucket_name"
     echo
     
-    check_ssl_certificate "$infrastructure_profile" "$certificate_arn"
+    check_ssl_certificate "$target_profile" "$certificate_arn"
     echo
     
     check_lambda_function "$target_profile" "$lambda_function_name" "$lambda_function_url" "$target_region"

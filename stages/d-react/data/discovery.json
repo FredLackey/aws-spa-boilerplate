@@ -1,13 +1,17 @@
 {
-  "infrastructureProfile": null,
-  "targetProfile": null,
-  "infrastructureAccountId": null,
-  "targetAccountId": null,
-  "targetRegion": null,
-  "distributionPrefix": null,
-  "targetVpcId": null,
-  "timestamp": null,
-  "reactServiceValidated": null,
-  "resourceConflictsChecked": null,
-  "quotasDiscovered": null
-} 
+  "targetAccountId": "415730361381",
+  "infrastructureAccountId": "953082249352",
+  "targetProfile": "bh-fred-sandbox",
+  "infrastructureProfile": "bh-infra",
+  "discoveryTimestamp": "2025-07-24T14:04:04Z",
+  "validationResults": {
+    "credentialsValid": true,
+    "cloudfrontAccessible": true,
+    "s3BucketAccessible": true,
+    "sslCertificateValid": true,
+    "lambdaFunctionAccessible": true,
+    "resourceConflictsChecked": true
+  },
+  "discoveryStatus": "completed",
+  "readyForDeployment": true
+}

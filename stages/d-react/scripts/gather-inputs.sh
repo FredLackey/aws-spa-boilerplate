@@ -88,6 +88,7 @@ load_stage_a_outputs() {
     TARGET_PROFILE=$(jq -r '.stageA.targetProfile // .targetProfile // empty' "$stage_a_outputs" 2>/dev/null || echo "")
     DISTRIBUTION_PREFIX=$(jq -r '.distributionPrefix // empty' "$stage_a_outputs" 2>/dev/null || echo "")
     DISTRIBUTION_ID=$(jq -r '.distributionId // empty' "$stage_a_outputs" 2>/dev/null || echo "")
+    DISTRIBUTION_DOMAIN_NAME=$(jq -r '.distributionDomainName // empty' "$stage_a_outputs" 2>/dev/null || echo "")
     DISTRIBUTION_URL=$(jq -r '.distributionUrl // empty' "$stage_a_outputs" 2>/dev/null || echo "")
     BUCKET_NAME=$(jq -r '.bucketName // empty' "$stage_a_outputs" 2>/dev/null || echo "")
     TARGET_REGION=$(jq -r '.targetRegion // empty' "$stage_a_outputs" 2>/dev/null || echo "")
@@ -137,13 +138,20 @@ load_stage_b_outputs() {
     
     # Extract Stage B configuration
     DOMAINS=($(jq -r '.domains[]? // empty' "$stage_b_outputs" 2>/dev/null || echo ""))
-    PRIMARY_DOMAIN=$(jq -r '.primaryDomain // empty' "$stage_b_outputs" 2>/dev/null || echo "")
+    PRIMARY_DOMAIN=$(jq -r '.domains[0] // empty' "$stage_b_outputs" 2>/dev/null || echo "")  # Use first domain as primary
     CERTIFICATE_ARN=$(jq -r '.certificateArn // empty' "$stage_b_outputs" 2>/dev/null || echo "")
-    HTTPS_URLS=($(jq -r '.httpsUrls[]? // empty' "$stage_b_outputs" 2>/dev/null || echo ""))
+    HTTPS_URLS=()  # Build HTTPS URLs from domains
+    
+    # Create HTTPS URLs from domains
+    for domain in "${DOMAINS[@]}"; do
+        if [[ -n "$domain" ]]; then
+            HTTPS_URLS+=("https://$domain")
+        fi
+    done
     
     if [[ -z "$PRIMARY_DOMAIN" ]] || [[ -z "$CERTIFICATE_ARN" ]] || [[ ${#DOMAINS[@]} -eq 0 ]]; then
         echo "❌ Error: Stage B outputs are incomplete"
-        echo "   Missing required fields: primaryDomain, certificateArn, or domains"
+        echo "   Missing required fields: domains[0] as primaryDomain, certificateArn, or domains array"
         return 1
     fi
     
@@ -181,12 +189,12 @@ load_stage_c_outputs() {
     # Extract Stage C configuration
     LAMBDA_FUNCTION_NAME=$(jq -r '.lambdaFunctionName // empty' "$stage_c_outputs" 2>/dev/null || echo "")
     LAMBDA_FUNCTION_ARN=$(jq -r '.lambdaFunctionArn // empty' "$stage_c_outputs" 2>/dev/null || echo "")
-    LAMBDA_FUNCTION_URL=$(jq -r '.lambdaFunctionUrl // empty' "$stage_c_outputs" 2>/dev/null || echo "")
-    API_ENDPOINTS=($(jq -r '.apiEndpoints[]? // empty' "$stage_c_outputs" 2>/dev/null || echo ""))
+    LAMBDA_FUNCTION_URL=$(jq -r '.functionUrl // empty' "$stage_c_outputs" 2>/dev/null || echo "")
+    API_ENDPOINTS=("$LAMBDA_FUNCTION_URL")  # Use function URL as the main API endpoint
     
     if [[ -z "$LAMBDA_FUNCTION_NAME" ]] || [[ -z "$LAMBDA_FUNCTION_ARN" ]] || [[ -z "$LAMBDA_FUNCTION_URL" ]]; then
         echo "❌ Error: Stage C outputs are incomplete"
-        echo "   Missing required fields: lambdaFunctionName, lambdaFunctionArn, or lambdaFunctionUrl"
+        echo "   Missing required fields: lambdaFunctionName, lambdaFunctionArn, or functionUrl"
         return 1
     fi
     
@@ -249,6 +257,7 @@ save_inputs_json() {
   },
   "stageA": {
     "distributionId": "$DISTRIBUTION_ID",
+    "distributionDomainName": "$DISTRIBUTION_DOMAIN_NAME",
     "distributionUrl": "$DISTRIBUTION_URL",
     "bucketName": "$BUCKET_NAME"
   },
@@ -270,6 +279,8 @@ save_inputs_json() {
   "targetRegion": "$TARGET_REGION",
   "targetVpcId": "$TARGET_VPC_ID",
   "distributionId": "$DISTRIBUTION_ID",
+  "distributionDomainName": "$DISTRIBUTION_DOMAIN_NAME",
+  "distributionUrl": "$DISTRIBUTION_URL",
   "bucketName": "$BUCKET_NAME",
   "primaryDomain": "$PRIMARY_DOMAIN",
   "certificateArn": "$CERTIFICATE_ARN",

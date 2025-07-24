@@ -53,6 +53,9 @@ export class ReactStack extends cdk.Stack {
       distributionId: distributionId,
       domainName: `${distributionId}.cloudfront.net`,
     });
+    
+    // Store the domain name for outputs since IDistribution doesn't expose it
+    const distributionDomainName = `${distributionId}.cloudfront.net`;
 
     // Create IAM role for React deployment automation (if needed for future automation)
     this.deploymentRole = new iam.Role(this, 'ReactDeploymentRole', {
@@ -141,7 +144,7 @@ export class ReactStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, 'ReactCloudFrontDomainName', {
-      value: this.cloudFrontDistribution.domainName,
+      value: distributionDomainName,
       description: 'CloudFront distribution domain name',
       exportName: `${distributionPrefix}-react-cloudfront-domain`,
     });

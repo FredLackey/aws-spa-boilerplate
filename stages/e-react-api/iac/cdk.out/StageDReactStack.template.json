@@ -1,0 +1,798 @@
+{
+ "Description": "Stage D React Deployment Stack - hellospa",
+ "Resources": {
+  "ReactDeploymentLogGroup7E27B7A2": {
+   "Type": "AWS::Logs::LogGroup",
+   "Properties": {
+    "LogGroupName": "/aws/react-deployment/hellospa",
+    "RetentionInDays": 30,
+    "Tags": [
+     {
+      "Key": "Component",
+      "Value": "React-Deployment"
+     },
+     {
+      "Key": "IntegratesWithStageA",
+      "Value": "true"
+     },
+     {
+      "Key": "IntegratesWithStageB",
+      "Value": "true"
+     },
+     {
+      "Key": "IntegratesWithStageC",
+      "Value": "true"
+     },
+     {
+      "Key": "Stage",
+      "Value": "D"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "StageDReactStack/ReactDeploymentLogGroup/Resource"
+   }
+  },
+  "ReactDeploymentRoleD1B56A1F": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Description": "Role for automated React deployment tasks",
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ],
+    "Policies": [
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": [
+          "s3:DeleteObject",
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:PutObject"
+         ],
+         "Effect": "Allow",
+         "Resource": [
+          "arn:aws:s3:::hellospa-content-415730361381",
+          "arn:aws:s3:::hellospa-content-415730361381/*"
+         ]
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "S3DeploymentPolicy"
+     },
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": [
+          "cloudfront:CreateInvalidation",
+          "cloudfront:GetInvalidation",
+          "cloudfront:ListInvalidations"
+         ],
+         "Effect": "Allow",
+         "Resource": {
+          "Fn::Join": [
+           "",
+           [
+            "arn:aws:cloudfront::",
+            {
+             "Ref": "AWS::AccountId"
+            },
+            ":distribution/E3Q3IZJ1UV53QK"
+           ]
+          ]
+         }
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "CloudFrontInvalidationPolicy"
+     },
+     {
+      "PolicyDocument": {
+       "Statement": [
+        {
+         "Action": [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+         ],
+         "Effect": "Allow",
+         "Resource": [
+          {
+           "Fn::GetAtt": [
+            "ReactDeploymentLogGroup7E27B7A2",
+            "Arn"
+           ]
+          },
+          {
+           "Fn::Join": [
+            "",
+            [
+             {
+              "Fn::GetAtt": [
+               "ReactDeploymentLogGroup7E27B7A2",
+               "Arn"
+              ]
+             },
+             ":*"
+            ]
+           ]
+          }
+         ]
+        }
+       ],
+       "Version": "2012-10-17"
+      },
+      "PolicyName": "CloudWatchLogsPolicy"
+     }
+    ],
+    "RoleName": "hellospa-react-deployment-role",
+    "Tags": [
+     {
+      "Key": "Component",
+      "Value": "React-Deployment"
+     },
+     {
+      "Key": "IntegratesWithStageA",
+      "Value": "true"
+     },
+     {
+      "Key": "IntegratesWithStageB",
+      "Value": "true"
+     },
+     {
+      "Key": "IntegratesWithStageC",
+      "Value": "true"
+     },
+     {
+      "Key": "Stage",
+      "Value": "D"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "StageDReactStack/ReactDeploymentRole/Resource"
+   }
+  },
+  "DeploymentStatusLambdaServiceRoleBB54FAAB": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "Component",
+      "Value": "React-Deployment"
+     },
+     {
+      "Key": "IntegratesWithStageA",
+      "Value": "true"
+     },
+     {
+      "Key": "IntegratesWithStageB",
+      "Value": "true"
+     },
+     {
+      "Key": "IntegratesWithStageC",
+      "Value": "true"
+     },
+     {
+      "Key": "Stage",
+      "Value": "D"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "StageDReactStack/DeploymentStatusLambda/ServiceRole/Resource"
+   }
+  },
+  "DeploymentStatusLambdaServiceRoleDefaultPolicy07043F0E": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "ReactDeploymentLogGroup7E27B7A2",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "DeploymentStatusLambdaServiceRoleDefaultPolicy07043F0E",
+    "Roles": [
+     {
+      "Ref": "DeploymentStatusLambdaServiceRoleBB54FAAB"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "StageDReactStack/DeploymentStatusLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "DeploymentStatusLambda7CE9460B": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "ZipFile": "\n        exports.handler = async (event) => {\n          console.log('Deployment Status Event:', JSON.stringify(event, null, 2));\n          \n          const response = {\n            Status: 'SUCCESS',\n            Reason: 'React deployment status recorded',\n            PhysicalResourceId: 'react-deployment-' + Date.now(),\n            Data: {\n              DeploymentStatus: 'SUCCESS',\n              Timestamp: new Date().toISOString(),\n              DistributionPrefix: event.ResourceProperties.DistributionPrefix,\n              BucketName: event.ResourceProperties.BucketName,\n              DistributionId: event.ResourceProperties.DistributionId,\n            }\n          };\n          \n          return response;\n        };\n      "
+    },
+    "Description": "Custom resource for React deployment status tracking",
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "DeploymentStatusLambdaServiceRoleBB54FAAB",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x",
+    "Tags": [
+     {
+      "Key": "Component",
+      "Value": "React-Deployment"
+     },
+     {
+      "Key": "IntegratesWithStageA",
+      "Value": "true"
+     },
+     {
+      "Key": "IntegratesWithStageB",
+      "Value": "true"
+     },
+     {
+      "Key": "IntegratesWithStageC",
+      "Value": "true"
+     },
+     {
+      "Key": "Stage",
+      "Value": "D"
+     }
+    ],
+    "Timeout": 300
+   },
+   "DependsOn": [
+    "DeploymentStatusLambdaServiceRoleDefaultPolicy07043F0E",
+    "DeploymentStatusLambdaServiceRoleBB54FAAB"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "StageDReactStack/DeploymentStatusLambda/Resource"
+   }
+  },
+  "DeploymentStatusLambdaLogRetention006488E4": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "DeploymentStatusLambda7CE9460B"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 7
+   },
+   "Metadata": {
+    "aws:cdk:path": "StageDReactStack/DeploymentStatusLambda/LogRetention/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "Component",
+      "Value": "React-Deployment"
+     },
+     {
+      "Key": "IntegratesWithStageA",
+      "Value": "true"
+     },
+     {
+      "Key": "IntegratesWithStageB",
+      "Value": "true"
+     },
+     {
+      "Key": "IntegratesWithStageC",
+      "Value": "true"
+     },
+     {
+      "Key": "Stage",
+      "Value": "D"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "StageDReactStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:DeleteRetentionPolicy",
+        "logs:PutRetentionPolicy"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+    "Roles": [
+     {
+      "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "StageDReactStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Handler": "index.handler",
+    "Runtime": "nodejs22.x",
+    "Timeout": 900,
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-415730361381-us-east-1",
+     "S3Key": "2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d.zip"
+    },
+    "Role": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+      "Arn"
+     ]
+    },
+    "Tags": [
+     {
+      "Key": "Component",
+      "Value": "React-Deployment"
+     },
+     {
+      "Key": "IntegratesWithStageA",
+      "Value": "true"
+     },
+     {
+      "Key": "IntegratesWithStageB",
+      "Value": "true"
+     },
+     {
+      "Key": "IntegratesWithStageC",
+      "Value": "true"
+     },
+     {
+      "Key": "Stage",
+      "Value": "D"
+     }
+    ]
+   },
+   "DependsOn": [
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "StageDReactStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource",
+    "aws:asset:path": "asset.2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "DeploymentStatusProviderframeworkonEventServiceRoleD401105C": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "Component",
+      "Value": "React-Deployment"
+     },
+     {
+      "Key": "IntegratesWithStageA",
+      "Value": "true"
+     },
+     {
+      "Key": "IntegratesWithStageB",
+      "Value": "true"
+     },
+     {
+      "Key": "IntegratesWithStageC",
+      "Value": "true"
+     },
+     {
+      "Key": "Stage",
+      "Value": "D"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "StageDReactStack/DeploymentStatusProvider/framework-onEvent/ServiceRole/Resource"
+   }
+  },
+  "DeploymentStatusProviderframeworkonEventServiceRoleDefaultPolicyB27360B5": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "lambda:InvokeFunction",
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "DeploymentStatusLambda7CE9460B",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DeploymentStatusLambda7CE9460B",
+             "Arn"
+            ]
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "lambda:GetFunction",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "DeploymentStatusLambda7CE9460B",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "DeploymentStatusProviderframeworkonEventServiceRoleDefaultPolicyB27360B5",
+    "Roles": [
+     {
+      "Ref": "DeploymentStatusProviderframeworkonEventServiceRoleD401105C"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "StageDReactStack/DeploymentStatusProvider/framework-onEvent/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "DeploymentStatusProviderframeworkonEvent9A00EAB0": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-415730361381-us-east-1",
+     "S3Key": "bdc104ed9cab1b5b6421713c8155f0b753380595356f710400609664d3635eca.zip"
+    },
+    "Description": "AWS CDK resource provider framework - onEvent (StageDReactStack/DeploymentStatusProvider)",
+    "Environment": {
+     "Variables": {
+      "USER_ON_EVENT_FUNCTION_ARN": {
+       "Fn::GetAtt": [
+        "DeploymentStatusLambda7CE9460B",
+        "Arn"
+       ]
+      }
+     }
+    },
+    "Handler": "framework.onEvent",
+    "LoggingConfig": {
+     "ApplicationLogLevel": "FATAL",
+     "LogFormat": "JSON"
+    },
+    "Role": {
+     "Fn::GetAtt": [
+      "DeploymentStatusProviderframeworkonEventServiceRoleD401105C",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs22.x",
+    "Tags": [
+     {
+      "Key": "Component",
+      "Value": "React-Deployment"
+     },
+     {
+      "Key": "IntegratesWithStageA",
+      "Value": "true"
+     },
+     {
+      "Key": "IntegratesWithStageB",
+      "Value": "true"
+     },
+     {
+      "Key": "IntegratesWithStageC",
+      "Value": "true"
+     },
+     {
+      "Key": "Stage",
+      "Value": "D"
+     }
+    ],
+    "Timeout": 900
+   },
+   "DependsOn": [
+    "DeploymentStatusProviderframeworkonEventServiceRoleDefaultPolicyB27360B5",
+    "DeploymentStatusProviderframeworkonEventServiceRoleD401105C"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "StageDReactStack/DeploymentStatusProvider/framework-onEvent/Resource",
+    "aws:asset:path": "asset.bdc104ed9cab1b5b6421713c8155f0b753380595356f710400609664d3635eca",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "DeploymentStatusProviderframeworkonEventLogRetentionB8BAAB6D": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "DeploymentStatusProviderframeworkonEvent9A00EAB0"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 7
+   },
+   "Metadata": {
+    "aws:cdk:path": "StageDReactStack/DeploymentStatusProvider/framework-onEvent/LogRetention/Resource"
+   }
+  },
+  "ReactDeploymentStatus": {
+   "Type": "AWS::CloudFormation::CustomResource",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "DeploymentStatusProviderframeworkonEvent9A00EAB0",
+      "Arn"
+     ]
+    },
+    "DistributionPrefix": "hellospa",
+    "BucketName": "hellospa-content-415730361381",
+    "DistributionId": "E3Q3IZJ1UV53QK",
+    "PrimaryDomain": "sbx.briskhaven.com",
+    "LambdaFunctionUrl": "https://ljol5hyg76f3amvxxzdjfta5vi0cpqjv.lambda-url.us-east-1.on.aws/",
+    "DeploymentTimestamp": "2025-07-24T14:07:43.155Z"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "StageDReactStack/ReactDeploymentStatus/Default"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/+1U32vbMBD+W6rHoGhZCiv4zSnNGIQtJGEvIQRFurpqZMnoh4sR/t+HZDtJSVc29tKHPRhLd/d99+lOuimZTr6QyQ19sWPGj2MpDiSsHWVHTF/sPkhdWBIWuvhqtK+2Acl++Z2WgDI0QhgZcKCc0Aplt5O4LXVN5VJLwRqUIQ7WGd2gdofvH9VAhRe6WA3AFttbMvPsCG5GLWx3WNCShJWWsA3IaAkX6ai1vgQ+a1AWUGWEYqKiMmdMe+VexUR8zjplaIRaHLUwI6qTCaOSKloAT2oFWJRtwytbk5sevcNIKCkUnGMTafgnRX+RP6XifKOXQ4qhxtvQe52j7OnbWWX0oRH6A+f/I3yEI/yeNz2eKBx35og50W109FxluTZzvnbUQQnK2UHwxyN625wq0B2+xZKWB05JmHuVGhnHhFdOnKbEE1Vcgul3TPPBcT0CIkr74YrIi7mEsruo5l30e2mvmOfalPR0GatKCkYj10IXC6hB/pyiDM3zTb64VoJPs7fH1xU7r9b+oMDZ3mCBeSNck8IHo0mlT8vHvmwXYxVULYxWseIPipmmungfqSEP54CugTg1MbVlaEMc5HtqLThL8vhr8Qqs9obBgBi+7kL3TpyC144WQhWYeet0uTe905Kl0bXgYPB98lxSJpof3lXetVhpDuTZfqqnU/L5jkxunq0Q475DZNX9fwF2X88l8wYAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "StageDReactStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "ReactS3BucketName": {
+   "Description": "S3 bucket name for React application content",
+   "Value": "hellospa-content-415730361381",
+   "Export": {
+    "Name": "hellospa-react-s3-bucket"
+   }
+  },
+  "ReactCloudFrontDistributionId": {
+   "Description": "CloudFront distribution ID serving React application",
+   "Value": "E3Q3IZJ1UV53QK",
+   "Export": {
+    "Name": "hellospa-react-cloudfront-id"
+   }
+  },
+  "ReactCloudFrontDomainName": {
+   "Description": "CloudFront distribution domain name",
+   "Value": "E3Q3IZJ1UV53QK.cloudfront.net",
+   "Export": {
+    "Name": "hellospa-react-cloudfront-domain"
+   }
+  },
+  "ReactPrimaryDomain": {
+   "Description": "Primary domain name for React application",
+   "Value": "sbx.briskhaven.com",
+   "Export": {
+    "Name": "hellospa-react-primary-domain"
+   }
+  },
+  "ReactDeploymentRoleArn": {
+   "Description": "IAM role ARN for React deployment automation",
+   "Value": {
+    "Fn::GetAtt": [
+     "ReactDeploymentRoleD1B56A1F",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "hellospa-react-deployment-role"
+   }
+  },
+  "ReactLogGroupName": {
+   "Description": "CloudWatch log group for React deployment",
+   "Value": {
+    "Ref": "ReactDeploymentLogGroup7E27B7A2"
+   },
+   "Export": {
+    "Name": "hellospa-react-log-group"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

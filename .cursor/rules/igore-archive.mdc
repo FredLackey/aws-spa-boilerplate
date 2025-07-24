@@ -1,0 +1,7 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+Ignore the /_archive folder structure nad files at all times.  Never read from it or write to it.

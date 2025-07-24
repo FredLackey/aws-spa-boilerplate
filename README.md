@@ -53,23 +53,23 @@ The boilerplate demonstrates a complete AWS-based SPA hosting solution:
 
 This monorepo contains four progressive applications that demonstrate different deployment scenarios:
 
-### 1. Hello World HTML (`apps/hello-world-html/`)
+### A. Hello World HTML (`apps/hello-world-html/`)
 A basic static HTML page that serves as the foundation for testing CloudFront distribution functionality. This proves that the CDN is working without any dependencies on certificates, APIs, or complex build processes.
 
 **Purpose**: Validate basic CloudFront distribution setup
 
-### 2. Hello World React (`apps/hello-world-react/`)
+### B. Hello World React (`apps/hello-world-react/`)
 A simple React application built with Vite that demonstrates serving a static SPA through CloudFront. This ensures that modern JavaScript applications can be properly served with correct routing and asset handling.
 
 **Purpose**: Validate CloudFront distribution for React SPAs
 
-### 3. Hello World Lambda (`apps/hello-world-lambda/`)
+### C. Hello World Lambda (`apps/hello-world-lambda/`)
 An extremely simple Node.js Lambda function that returns a JSON response containing the current server timestamp. This minimal API endpoint validates that Lambda deployment and invocation are working correctly.
 
 **Purpose**: Validate Lambda function deployment and API functionality
 
-### 4. Hello World JSON (`apps/hello-world-json/`)
-A React application that consumes the Lambda API from application #3, demonstrating full-stack connectivity. This app uses CloudFront behaviors to route API calls to Lambda while serving the React app from the same domain.
+### D. Hello World JSON (`apps/hello-world-json/`)
+A React application that consumes the Lambda API from application C, demonstrating full-stack connectivity. This app uses CloudFront behaviors to route API calls to Lambda while serving the React app from the same domain.
 
 **Purpose**: Validate end-to-end SPA + API integration through CloudFront
 
@@ -77,19 +77,19 @@ A React application that consumes the Lambda API from application #3, demonstrat
 
 The deployment process is broken into 5 progressive stages, each building upon the previous ones. See [STAGES.md](./STAGES.md) for detailed stage-by-stage instructions.
 
-### Stage 1: CloudFront Distribution
+### Stage A: CloudFront Distribution
 Deploy the Hello World HTML app to establish basic CloudFront functionality.
 
-### Stage 2: SSL Certificate
+### Stage B: SSL Certificate
 Add SSL/TLS certificates and Route53 DNS configuration for HTTPS access.
 
-### Stage 3: Lambda API
+### Stage C: Lambda API
 Deploy the Hello World Lambda function to establish serverless API capability.
 
-### Stage 4: React SPA
+### Stage D: React SPA
 Replace the HTML app with the Hello World React application.
 
-### Stage 5: Full-Stack Integration
+### Stage E: Full-Stack Integration
 Deploy the Hello World JSON app that demonstrates complete SPA + API integration.
 
 ## Prerequisites
@@ -102,7 +102,7 @@ Deploy the Hello World JSON app that demonstrates complete SPA + API integration
 
 1. Clone this repository
 2. Review the [STAGES.md](./STAGES.md) file for detailed deployment instructions
-3. Start with Stage 1 and proceed sequentially through each stage
+3. Start with Stage A and proceed sequentially through each stage
 4. Each stage outputs configuration details needed for subsequent stages
 
 ## Project Structure
@@ -110,10 +110,10 @@ Deploy the Hello World JSON app that demonstrates complete SPA + API integration
 ```
 aws-spa-boilerplate/
 ├── apps/
-│   ├── hello-world-html/      # Stage 1: Basic HTML validation
-│   ├── hello-world-react/     # Stage 4: React SPA deployment  
-│   ├── hello-world-lambda/    # Stage 3: Serverless API
-│   └── hello-world-json/      # Stage 5: Full-stack integration
+│   ├── hello-world-html/      # Stage A: Basic HTML validation
+│   ├── hello-world-react/     # Stage D: React SPA deployment  
+│   ├── hello-world-lambda/    # Stage C: Serverless API
+│   └── hello-world-json/      # Stage E: Full-stack integration
 ├── STAGES.md                  # Detailed deployment guide
 └── README.md                  # This file
 ```

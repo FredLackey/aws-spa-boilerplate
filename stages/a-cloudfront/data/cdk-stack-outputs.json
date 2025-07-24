@@ -1,0 +1,10 @@
+{
+  "TargetRegion": "us-east-1",
+  "BucketArn": "arn:aws:s3:::hellospa-content-415730361381",
+  "BucketName": "hellospa-content-415730361381",
+  "DistributionUrl": "https://d3vg033g49esvn.cloudfront.net",
+  "DistributionId": "E3Q3IZJ1UV53QK",
+  "TargetVpcId": "vpc-0f59afe5908b84a1a",
+  "DistributionDomainName": "d3vg033g49esvn.cloudfront.net",
+  "DistributionPrefix": "hellospa"
+}

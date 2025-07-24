@@ -1,0 +1,7 @@
+{
+  "infrastructureProfile": "bh-infra",
+  "targetProfile": "bh-fred-sandbox",
+  "distributionPrefix": "hellospa",
+  "targetRegion": "us-east-1",
+  "targetVpcId": "vpc-0f59afe5908b84a1a"
+}

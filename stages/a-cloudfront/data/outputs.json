@@ -1,0 +1,29 @@
+{
+  "stageA": {
+    "distributionId": "E3Q3IZJ1UV53QK",
+    "distributionDomainName": "d3vg033g49esvn.cloudfront.net",
+    "distributionUrl": "https://d3vg033g49esvn.cloudfront.net",
+    "bucketName": "hellospa-content-415730361381",
+    "bucketArn": "arn:aws:s3:::hellospa-content-415730361381",
+    "distributionPrefix": "hellospa",
+    "targetRegion": "us-east-1",
+    "targetVpcId": "vpc-0f59afe5908b84a1a",
+    "targetAccountId": "415730361381",
+    "infrastructureAccountId": "953082249352",
+    "targetProfile": "bh-fred-sandbox",
+    "infrastructureProfile": "bh-infra"
+  },
+  "distributionId": "E3Q3IZJ1UV53QK",
+  "distributionDomainName": "d3vg033g49esvn.cloudfront.net",
+  "distributionUrl": "https://d3vg033g49esvn.cloudfront.net",
+  "bucketName": "hellospa-content-415730361381",
+  "bucketArn": "arn:aws:s3:::hellospa-content-415730361381",
+  "distributionPrefix": "hellospa",
+  "targetRegion": "us-east-1",
+  "targetVpcId": "vpc-0f59afe5908b84a1a",
+  "targetAccountId": "415730361381",
+  "infrastructureAccountId": "953082249352",
+  "deploymentTimestamp": "2025-07-24T08:05:56Z",
+  "validationStatus": "passed",
+  "readyForStageB": true
+}

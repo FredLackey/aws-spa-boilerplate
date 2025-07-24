@@ -39,6 +39,16 @@ The final result is a production-ready hosting environment where you only need t
 1. Replace the Lambda function contents with your API code
 2. Replace the CloudFront distribution contents with your actual SPA build
 
+## Technology Stack
+
+This boilerplate uses modern infrastructure-as-code and deployment tools:
+
+- **Infrastructure as Code**: AWS CDK (Cloud Development Kit) for all AWS resource provisioning
+- **Deployment Automation**: Bash scripts for orchestration and user interaction
+- **AWS Services**: CloudFront, Lambda, Route53, Certificate Manager, S3
+- **Application Technologies**: HTML, CSS, React with Vite, Node.js
+- **Configuration Management**: CDK context and environment variables for environment-specific settings
+
 ## Architecture
 
 The boilerplate demonstrates a complete AWS-based SPA hosting solution:
@@ -114,9 +124,156 @@ aws-spa-boilerplate/
 │   ├── hello-world-react/     # Stage D: React SPA deployment  
 │   ├── hello-world-lambda/    # Stage C: Serverless API
 │   └── hello-world-json/      # Stage E: Full-stack integration
+├── stages/
+│   ├── a-cloudfront/          # Stage A deployment
+│   ├── b-ssl/                 # Stage B deployment
+│   ├── c-lambda/              # Stage C deployment
+│   ├── d-react/               # Stage D deployment
+│   └── e-react-api/           # Stage E deployment
 ├── STAGES.md                  # Detailed deployment guide
 └── README.md                  # This file
 ```
+
+## Stages Directory Structure
+
+The `/stages` folder contains the deployment automation for each stage. Each stage follows a consistent structure:
+
+```
+stages/
+├── a-cloudfront/
+│   ├── go-a.sh               # Main deployment script for Stage A
+│   ├── iac/                  # AWS CDK infrastructure code
+│   ├── scripts/              # Helper scripts and utilities
+│   └── data/                 # Stage data management
+│       ├── inputs.json       # User-provided information
+│       ├── discovery.json    # AWS account interrogation results
+│       └── outputs.json      # Stage deployment results
+├── b-ssl/
+│   ├── go-b.sh               # Main deployment script for Stage B
+│   ├── iac/                  # AWS CDK infrastructure code
+│   ├── scripts/              # Helper scripts and utilities
+│   └── data/                 # Stage data management
+│       ├── inputs.json       # User-provided information
+│       ├── discovery.json    # AWS account interrogation results
+│       └── outputs.json      # Stage deployment results
+├── c-lambda/
+│   ├── go-c.sh               # Main deployment script for Stage C
+│   ├── iac/                  # AWS CDK infrastructure code
+│   ├── scripts/              # Helper scripts and utilities
+│   └── data/                 # Stage data management
+│       ├── inputs.json       # User-provided information
+│       ├── discovery.json    # AWS account interrogation results
+│       └── outputs.json      # Stage deployment results
+├── d-react/
+│   ├── go-d.sh               # Main deployment script for Stage D
+│   ├── iac/                  # AWS CDK infrastructure code
+│   ├── scripts/              # Helper scripts and utilities
+│   └── data/                 # Stage data management
+│       ├── inputs.json       # User-provided information
+│       ├── discovery.json    # AWS account interrogation results
+│       └── outputs.json      # Stage deployment results
+└── e-react-api/
+    ├── go-e.sh               # Main deployment script for Stage E
+    ├── iac/                  # AWS CDK infrastructure code
+    ├── scripts/              # Helper scripts and utilities
+    └── data/                 # Stage data management
+        ├── inputs.json       # User-provided information
+        ├── discovery.json    # AWS account interrogation results
+        └── outputs.json      # Stage deployment results
+```
+
+### Stage Components
+
+Each stage directory contains four key components:
+
+#### 1. Main Deployment Script (`go-{stage}.sh`)
+The primary entry point for each stage deployment with specific responsibilities:
+
+**User Interaction & Information Gathering**:
+- Prompts for required information (AWS profiles, domain names, account IDs, etc.)
+- Captures AWS profile to use for all subsequent operations
+- Validates user inputs and prerequisites from previous stages
+
+**AWS Discovery & Data Collection**:
+- Performs AWS CLI lookups to discover existing resources
+- Gathers account-specific information needed for deployment
+- Retrieves outputs from previous stages for dependency management
+
+**Data Management and CDK Configuration**:
+- Saves user inputs to `data/inputs.json` file for persistence and reuse
+- Stores AWS discovery results in `data/discovery.json` file for reference
+- Creates CDK context files combining inputs, discovery data, and previous stage outputs
+- Sets environment variables and context values for CDK deployment
+
+**Deployment Orchestration**:
+- Executes CDK commands with appropriate AWS profile and configuration
+- Coordinates infrastructure deployment with application deployment
+- Handles error conditions and rollback scenarios
+
+**Output Generation**: 
+- Captures CDK stack outputs and deployment results in `data/outputs.json` file
+- Creates structured JSON data for subsequent stages
+- Stores resource identifiers, URLs, and configuration details
+- Validates successful deployment before completion
+
+#### 2. Infrastructure as Code (`iac/` folder)
+Contains AWS CDK applications and constructs:
+- **Stack Definitions**: AWS resources specific to each stage defined in code
+- **Context Management**: Input parameters and configuration through CDK context
+- **State Management**: CDK metadata and CloudFormation stack state
+- **Output Exports**: Infrastructure details exported from CDK stacks for other stages
+
+#### 3. Helper Scripts (`scripts/` folder)
+Utility scripts for stage-specific operations:
+- **Build Scripts**: Application compilation and packaging
+- **Deployment Utilities**: File uploads, cache invalidation, etc.
+- **Configuration Helpers**: Environment setup and validation
+- **Testing Scripts**: Automated verification of stage completion
+
+#### 4. Data Management (`data/` folder)
+Structured JSON data storage for stage lifecycle management:
+
+**Inputs File** (`data/inputs.json`):
+- Stores all user-provided information from prompts in JSON format
+- Contains AWS profiles, account IDs, domain names, and configuration values
+- Serves as the single source of truth for user-specified parameters
+- Used by CDK and helper scripts for consistent configuration
+
+**Discovery File** (`data/discovery.json`):
+- Contains results from AWS account interrogation and resource discovery in JSON format
+- Stores existing infrastructure details, account information, and region data
+- Captures dependency information from previous stages
+- Provides context for deployment decisions and resource naming
+
+**Outputs File** (`data/outputs.json`):
+- Records deployment results and created resource identifiers in JSON format
+- Contains CDK stack outputs, resource ARNs, URLs, and configuration details
+- Stores values needed by subsequent stages for dependency management
+- Enables stage validation and rollback operations
+
+### Deployment Workflow
+
+1. **Execute Stage Script**: Run `./go-{stage}.sh` from the appropriate stage directory
+2. **AWS Profile Setup**: Provide AWS CLI profile for account access
+3. **Information Gathering & Data Management**: 
+   - Answer prompts for required inputs (domain names, account IDs, etc.) → saved to `data/inputs.json`
+   - Script discovers existing AWS resources and account information → saved to `data/discovery.json`
+   - Previous stage outputs are loaded from `data/outputs.json` files for dependencies
+4. **CDK Configuration**: Script sets CDK context and environment variables using data files
+5. **Infrastructure Deployment**: CDK provisions AWS resources using the configured context
+6. **Application Deployment**: Helper scripts deploy applications and content
+7. **Validation & Testing**: Automated verification of stage completion
+8. **Output Generation**: Results saved to `data/outputs.json` file for subsequent stages
+
+### AWS Profile Management
+
+Each stage requires an AWS CLI profile to be specified for:
+- **Resource Discovery**: Looking up existing infrastructure and account details
+- **CDK Deployment**: Provisioning new resources with appropriate permissions
+- **Application Deployment**: Uploading content and configuring services
+- **Validation Testing**: Verifying deployment success and functionality
+
+The go scripts handle profile management consistently across all stages, ensuring proper AWS authentication and authorization throughout the deployment process.
 
 ## Key Features
 

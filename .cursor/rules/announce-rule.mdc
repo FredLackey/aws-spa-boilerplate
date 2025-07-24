@@ -1,0 +1,7 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+Always identify the rule used in the Agent or Ask mode with 🎇 and the name of the rule.

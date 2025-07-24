@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- Never set default values for environment variables.
+- Check for valid environment vaariables upon startup.
+- If required environment variables are missing display an error and exit.
+- The dotenv package is never used.  The dotenv-cli package is used during development to load environment variables.

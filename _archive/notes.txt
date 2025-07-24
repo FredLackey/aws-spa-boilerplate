@@ -14,3 +14,12 @@
  Associate route table
  Verifying route table creation
  Associate S3 endpoint with private subnet route tables: vpce-08cb8f58346d3a579 
+
+
+- Distribution Prefix: hellospa
+- Infrastructure Profile: bh-infra
+- Target Region: us-east-1
+- Target Profile: bh-fred-sandbox
+- Target VPC ID: vpc-0f59afe5908b84a1a
+- Target Account ID: 415730361381
+- FQDNs: www.sbx.briskhaven.com,sbx.briskhaven.com

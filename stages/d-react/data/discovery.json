@@ -1,0 +1,13 @@
+{
+  "infrastructureProfile": null,
+  "targetProfile": null,
+  "infrastructureAccountId": null,
+  "targetAccountId": null,
+  "targetRegion": null,
+  "distributionPrefix": null,
+  "targetVpcId": null,
+  "timestamp": null,
+  "reactServiceValidated": null,
+  "resourceConflictsChecked": null,
+  "quotasDiscovered": null
+} 

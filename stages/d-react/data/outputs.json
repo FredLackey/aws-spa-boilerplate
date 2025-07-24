@@ -1,0 +1,20 @@
+{
+  "stageD": {
+    "distributionId": null,
+    "distributionDomainName": null,
+    "bucketName": null,
+    "domains": null,
+    "certificateArn": null,
+    "deploymentTimestamp": null,
+    "reactBuildCompleted": null,
+    "contentDeployed": null,
+    "cacheInvalidated": null
+  },
+  "distributionId": null,
+  "distributionDomainName": null,
+  "bucketName": null,
+  "deploymentTimestamp": null,
+  "reactBuildCompleted": null,
+  "contentDeployed": null,
+  "readyForStageE": null
+} 

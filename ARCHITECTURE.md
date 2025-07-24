@@ -1,4 +1,4 @@
-# Can I use two separate accounts (infrastructure & hosting)?
+# Can I use two separate accounts for infrastructure & hosting?
 
 It’s entirely possible to centralize all DNS records for your domains (yourdomain.com, www.yourdomain.com, sbx.yourdomain.com, www.sbx.yourdomain.com, dev.yourdomain.com, and www.dev.yourdomain.com) in the infrastructure account using Amazon Route 53, while keeping environment-specific resources like CloudFront distributions, Lambda functions, and SSL certificates in their respective accounts (production, sandbox, and development). This approach aligns with your goal of maintaining DNS records in the infrastructure account and avoids the need to use Route 53 in member accounts. Below, I’ll outline how to achieve this setup, address the SSL certificate storage, and clarify the configuration steps.
 

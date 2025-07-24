@@ -1,0 +1,16 @@
+{
+  "domains": [
+  "sbx.briskhaven.com",
+  "www.sbx.briskhaven.com"
+],
+  "infraProfile": "bh-infra",
+  "targetProfile": "bh-fred-sandbox",
+  "infraAccountId": "953082249352",
+  "targetAccountId": "415730361381",
+  "distributionId": "E3Q3IZJ1UV53QK",
+  "distributionUrl": "https://d3vg033g49esvn.cloudfront.net",
+  "bucketName": "hellospa-content-415730361381",
+  "targetRegion": "us-east-1",
+  "timestamp": "2025-07-24T08:47:00Z",
+  "stageAReady": true
+}

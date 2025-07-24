@@ -40,3 +40,13 @@
 .read-the-docs {
   color: #888;
 }
+
+.json-display {
+  font-family: 'Courier New', Courier, monospace;
+  background-color: #2d4a32;
+  padding: 10px;
+  border-radius: 4px;
+  text-align: left;
+  font-size: 14px;
+  overflow: auto;
+}

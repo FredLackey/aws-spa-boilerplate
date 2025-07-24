@@ -94,6 +94,28 @@
     "@aws-cdk/s3-notifications:addS3TrustKeyPolicyForSnsSubscriptions": true,
     "@aws-cdk/aws-ec2:requirePrivateSubnetsForEgressOnlyInternetGateway": true,
     "@aws-cdk/aws-s3:publicAccessBlockedByDefault": true,
-    "@aws-cdk/aws-lambda:useCdkManagedLogGroup": true
+    "@aws-cdk/aws-lambda:useCdkManagedLogGroup": true,
+    "stage-b-ssl:domains": [
+      "sbx.briskhaven.com",
+      "www.sbx.briskhaven.com"
+    ],
+    "stage-b-ssl:hostedZones": [
+      {
+        "domain": "sbx.briskhaven.com",
+        "zoneId": "/hostedzone/Z01149023QVGP1C27GLC5",
+        "zoneName": "briskhaven.com"
+      },
+      {
+        "domain": "www.sbx.briskhaven.com",
+        "zoneId": "/hostedzone/Z01149023QVGP1C27GLC5",
+        "zoneName": "briskhaven.com"
+      }
+    ],
+    "stage-b-ssl:distributionId": "E3Q3IZJ1UV53QK",
+    "stage-b-ssl:infraProfile": "bh-infra",
+    "stage-b-ssl:targetProfile": "bh-fred-sandbox",
+    "stage-b-ssl:infraAccountId": "953082249352",
+    "stage-b-ssl:targetAccountId": "415730361381",
+    "stage-b-ssl:existingCertificateArn": null
   }
-} 
+}

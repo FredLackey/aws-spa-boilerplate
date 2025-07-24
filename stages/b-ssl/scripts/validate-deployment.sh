@@ -333,8 +333,10 @@ main_validation() {
     echo
     
     # Step 2: Load configuration
-    local domains infra_profile target_profile distribution_id cert_arn
-    mapfile -t domains < <(jq -r '.domains[]' "$DATA_DIR/inputs.json" | sort)
+    local domains=() infra_profile target_profile distribution_id cert_arn
+    while IFS= read -r domain; do
+        [[ -n "$domain" ]] && domains+=("$domain")
+    done < <(jq -r '.domains[]' "$DATA_DIR/inputs.json" | sort)
     infra_profile=$(jq -r '.infraProfile' "$DATA_DIR/inputs.json")
     target_profile=$(jq -r '.targetProfile' "$DATA_DIR/inputs.json")
     distribution_id=$(jq -r '.distributionId' "$DATA_DIR/inputs.json")

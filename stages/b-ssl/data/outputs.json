@@ -1,0 +1,31 @@
+{
+  "stageB": {
+    "certificateArn": "arn:aws:acm:us-east-1:415730361381:certificate/ccb55cf0-2900-448b-8abe-30e127819805",
+    "distributionId": "E3Q3IZJ1UV53QK",
+    "distributionDomainName": "d3vg033g49esvn.cloudfront.net",
+    "domains": ["sbx.briskhaven.com", "www.sbx.briskhaven.com"],
+    "hostedZones": [
+      {"domain": "sbx.briskhaven.com", "zoneId": "/hostedzone/Z01149023QVGP1C27GLC5", "zoneName": "briskhaven.com"},
+      {"domain": "www.sbx.briskhaven.com", "zoneId": "/hostedzone/Z01149023QVGP1C27GLC5", "zoneName": "briskhaven.com"}
+    ],
+    "targetProfile": "bh-fred-sandbox",
+    "infraProfile": "bh-infra",
+    "targetAccountId": "415730361381",
+    "infraAccountId": "953082249352",
+    "validationMethod": "DNS",
+    "deploymentTimestamp": "2025-07-24T10:33:51Z",
+    "validationStatus": "completed",
+    "cloudfrontStatus": "updating",
+    "conflictingDistributionCleaned": "E1O4LACG1PMY1F"
+  },
+  "certificateArn": "arn:aws:acm:us-east-1:415730361381:certificate/ccb55cf0-2900-448b-8abe-30e127819805",
+  "distributionId": "E3Q3IZJ1UV53QK",
+  "distributionDomainName": "d3vg033g49esvn.cloudfront.net",
+  "domains": ["sbx.briskhaven.com", "www.sbx.briskhaven.com"],
+  "deploymentTimestamp": "2025-07-24T10:33:51Z",
+  "validationStatus": "completed",
+  "sslEnabled": true,
+  "customDomainsConfigured": true,
+  "httpsRedirectEnabled": true,
+  "readyForStageC": true
+}

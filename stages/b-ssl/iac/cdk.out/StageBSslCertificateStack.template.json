@@ -1,0 +1,125 @@
+{
+ "Description": "Stage B SSL Certificate and CloudFront Integration Stack",
+ "Resources": {
+  "SslCertificateB048BE20": {
+   "Type": "AWS::CertificateManager::Certificate",
+   "Properties": {
+    "DomainName": "sbx.briskhaven.com",
+    "SubjectAlternativeNames": [
+     "www.sbx.briskhaven.com"
+    ],
+    "Tags": [
+     {
+      "Key": "Component",
+      "Value": "SSL-Certificate"
+     },
+     {
+      "Key": "DomainCount",
+      "Value": "2"
+     },
+     {
+      "Key": "Name",
+      "Value": "stage-b-ssl-sbx-briskhaven-com-www-sbx-briskhaven-com"
+     },
+     {
+      "Key": "Stage",
+      "Value": "B-SSL"
+     }
+    ],
+    "ValidationMethod": "DNS"
+   },
+   "Metadata": {
+    "aws:cdk:path": "StageBSslCertificateStack/SslCertificate/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/02NwQqCQBRFv8VZxjiZi4J20b7AliLxHJ/x1Blj5o0uxH8PScrV5d4D96QqTY4qiWD0sa7auKNSTQ8G3coMfR+cxryQMPqnRsdUkwZGAxZe6NR0/W/5JKreANkbGBRnsRNS+FA2qPnSMToLTAMu0K90gI4qYOrtOmwMv5O5kNfabjzz0u+B34FnafsKVeP3Q5qqw0klUeOJYhcsk0GVffMDdx5BAeMAAAA="
+   },
+   "Metadata": {
+    "aws:cdk:path": "StageBSslCertificateStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "CertificateArnOutput": {
+   "Description": "SSL Certificate ARN (newly created)",
+   "Value": {
+    "Ref": "SslCertificateB048BE20"
+   },
+   "Export": {
+    "Name": "StageBSslCertificateArn"
+   }
+  },
+  "DistributionIdOutput": {
+   "Description": "CloudFront Distribution ID",
+   "Value": "E3Q3IZJ1UV53QK",
+   "Export": {
+    "Name": "StageBDistributionId"
+   }
+  },
+  "DistributionDomainNameOutput": {
+   "Description": "CloudFront Distribution Domain Name",
+   "Value": "E3Q3IZJ1UV53QK.cloudfront.net",
+   "Export": {
+    "Name": "StageBDistributionDomainName"
+   }
+  },
+  "DomainsOutput": {
+   "Description": "SSL Certificate Domains",
+   "Value": "sbx.briskhaven.com,www.sbx.briskhaven.com",
+   "Export": {
+    "Name": "StageBSslDomains"
+   }
+  },
+  "ValidationMethodOutput": {
+   "Description": "Certificate Validation Method",
+   "Value": "DNS",
+   "Export": {
+    "Name": "StageBValidationMethod"
+   }
+  },
+  "HostedZonesOutput": {
+   "Description": "Route53 Hosted Zones Used",
+   "Value": "sbx.briskhaven.com:/hostedzone/Z01149023QVGP1C27GLC5,www.sbx.briskhaven.com:/hostedzone/Z01149023QVGP1C27GLC5",
+   "Export": {
+    "Name": "StageBHostedZones"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

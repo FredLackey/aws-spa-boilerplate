@@ -1,0 +1,10 @@
+{
+  "StageBSslCertificateStack": {
+    "DistributionIdOutput": "E3Q3IZJ1UV53QK",
+    "DistributionDomainNameOutput": "E3Q3IZJ1UV53QK.cloudfront.net",
+    "HostedZonesOutput": "sbx.briskhaven.com:/hostedzone/Z01149023QVGP1C27GLC5,www.sbx.briskhaven.com:/hostedzone/Z01149023QVGP1C27GLC5",
+    "ValidationMethodOutput": "DNS",
+    "CertificateArnOutput": "arn:aws:acm:us-east-1:415730361381:certificate/ccb55cf0-2900-448b-8abe-30e127819805",
+    "DomainsOutput": "sbx.briskhaven.com,www.sbx.briskhaven.com"
+  }
+}

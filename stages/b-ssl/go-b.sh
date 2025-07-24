@@ -3,6 +3,12 @@
 # go-b.sh
 # Main orchestration script for Stage B SSL Certificate deployment
 # Coordinates SSL certificate creation and CloudFront integration workflow
+# 
+# ARCHITECTURE COMPLIANCE:
+# - SSL certificates created in environment-specific accounts (us-east-1)
+# - DNS validation records managed in infrastructure account Route53
+# - CloudFront distributions updated in environment-specific accounts
+# - Aligns with ARCHITECTURE.md centralized DNS approach
 
 set -euo pipefail
 
@@ -283,7 +289,7 @@ check_cloudfront_status() {
     fi
     
     local target_profile
-    target_profile=$(jq -r '.targetProfile // empty' "$stage_a_outputs")
+    target_profile=$(jq -r '.targetProfile // .stageA.targetProfile // empty' "$stage_a_outputs")
     
     if [[ -z "$target_profile" ]]; then
         echo "❌ Could not determine target profile from Stage A outputs"

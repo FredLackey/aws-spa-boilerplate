@@ -133,17 +133,17 @@ revert_cloudfront_distribution() {
 
 # Function to remove SSL certificate
 remove_ssl_certificate() {
-    local infra_profile="$1"
+    local target_profile="$1"
     local cert_arn="$2"
     
     echo "🔒 Removing SSL certificate..."
     echo "   Certificate ARN: $cert_arn"
-    echo "   Infrastructure Profile: $infra_profile"
+    echo "   Target Profile: $target_profile (environment-specific account)"
     
     # Check if certificate still exists
     echo "   🔍 Checking certificate status..."
     local cert_details
-    cert_details=$(aws acm describe-certificate --certificate-arn "$cert_arn" --profile "$infra_profile" --region us-east-1 --output json 2>/dev/null || echo '{}')
+    cert_details=$(aws acm describe-certificate --certificate-arn "$cert_arn" --profile "$target_profile" --region us-east-1 --output json 2>/dev/null || echo '{}')
     
     if [[ "$cert_details" == "{}" ]]; then
         echo "✅ SSL certificate no longer exists or is not accessible"
@@ -168,7 +168,7 @@ remove_ssl_certificate() {
     
     # Attempt to delete the certificate
     echo "   🗑️  Deleting SSL certificate..."
-    if aws acm delete-certificate --certificate-arn "$cert_arn" --profile "$infra_profile" --region us-east-1 2>/dev/null; then
+    if aws acm delete-certificate --certificate-arn "$cert_arn" --profile "$target_profile" --region us-east-1 2>/dev/null; then
         echo "✅ SSL certificate deleted successfully"
         return 0
     else
@@ -325,15 +325,31 @@ main_cleanup() {
     fi
     echo
     
-    # Step 5: Remove SSL certificate (if it exists)
+    # Step 5: Remove DNS validation records from infrastructure account Route53
+    echo "🔄 Step 2: Removing DNS validation records from infrastructure account Route53..."
+    echo "   Per architecture: DNS validation records managed in infrastructure account"
+    
+    local dns_script="$SCRIPT_DIR/manage-dns-validation.sh"
+    if [[ -f "$dns_script" ]] && [[ -n "$cert_arn" ]] && [[ "$cert_arn" != "unknown" ]]; then
+        if ! "$dns_script" remove; then
+            echo "⚠️  DNS validation record removal failed or records already removed"
+            echo "   This is usually not critical - continuing with cleanup..."
+        fi
+    else
+        echo "   ℹ️  Skipping DNS validation cleanup (no certificate or script not found)"
+    fi
+    echo
+
+    # Step 6: Remove SSL certificate (if it exists)
     if [[ -n "$cert_arn" ]] && [[ "$cert_arn" != "unknown" ]]; then
-        echo "🔄 Step 2: Removing SSL certificate..."
+        echo "🔄 Step 3: Removing SSL certificate from environment account..."
+        echo "   Per architecture: Certificate stored in environment-specific account"
         
         # Wait a bit for CloudFront changes to take effect
         echo "   ⏰ Waiting 30 seconds for CloudFront changes to propagate..."
         sleep 30
         
-        if ! remove_ssl_certificate "$infra_profile" "$cert_arn"; then
+        if ! remove_ssl_certificate "$target_profile" "$cert_arn"; then
             echo "⚠️  SSL certificate removal failed"
             echo "   The certificate may still be in use or have dependencies"
             echo "   You can try running this cleanup script again in a few minutes"

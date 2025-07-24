@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
-import * as route53 from 'aws-cdk-lib/aws-route53';
 import { Construct } from 'constructs';
 
 export interface SslCertificateStackProps extends cdk.StackProps {
@@ -9,44 +8,30 @@ export interface SslCertificateStackProps extends cdk.StackProps {
 }
 
 export class SslCertificateStack extends cdk.Stack {
-  public readonly certificate: acm.Certificate;
-  public readonly distribution: cloudfront.Distribution;
+  public readonly certificate: acm.ICertificate;
+  public readonly distribution: cloudfront.IDistribution;
 
   constructor(scope: Construct, id: string, props: SslCertificateStackProps) {
     super(scope, id, props);
 
     // Get context values from CDK context (set by deploy-infrastructure.sh)
     const domains = this.node.tryGetContext('stage-b-ssl:domains') as string[];
-    const hostedZones = this.node.tryGetContext('stage-b-ssl:hostedZones') as Array<{
-      domain: string;
-      zoneId: string;
-      zoneName: string;
-    }>;
     const distributionId = this.node.tryGetContext('stage-b-ssl:distributionId') as string;
     const infraAccountId = this.node.tryGetContext('stage-b-ssl:infraAccountId') as string;
     const targetAccountId = this.node.tryGetContext('stage-b-ssl:targetAccountId') as string;
 
     // Validate required context
-    if (!domains || !hostedZones || !distributionId) {
-      throw new Error('Missing required context: domains, hostedZones, or distributionId');
+    if (!domains || !distributionId) {
+      throw new Error('Missing required context: domains or distributionId');
+    }
+
+    if (!infraAccountId || !targetAccountId) {
+      throw new Error('Missing required context: infraAccountId or targetAccountId');
     }
 
     // Sort domains alphabetically for consistent certificate creation
     const sortedDomains = [...domains].sort();
     
-    // Create hosted zone references for DNS validation
-    const hostedZoneMap = new Map<string, route53.IHostedZone>();
-    
-    for (const zoneInfo of hostedZones) {
-      // Import existing hosted zone
-      const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, `HostedZone-${zoneInfo.zoneName}`, {
-        hostedZoneId: zoneInfo.zoneId.replace('/hostedzone/', ''),
-        zoneName: zoneInfo.zoneName,
-      });
-      
-      hostedZoneMap.set(zoneInfo.domain, hostedZone);
-    }
-
     // Check for existing certificate with the same domain set
     const certificateArn = this.node.tryGetContext('stage-b-ssl:existingCertificateArn') as string;
     
@@ -61,19 +46,12 @@ export class SslCertificateStack extends cdk.Stack {
       });
     } else {
       // Create new SSL certificate with DNS validation
-      const validationMap: { [domainName: string]: acm.CertificateValidation } = {};
-      
-      for (const domain of sortedDomains) {
-        const hostedZone = hostedZoneMap.get(domain);
-        if (hostedZone) {
-          validationMap[domain] = acm.CertificateValidation.fromDns(hostedZone);
-        }
-      }
-
+      // Per architecture: Certificate created in environment-specific account (us-east-1)
+      // DNS validation records will be managed separately in infrastructure account
       this.certificate = new acm.Certificate(this, 'SslCertificate', {
         domainName: sortedDomains[0], // Primary domain
         subjectAlternativeNames: sortedDomains.slice(1), // Additional domains
-        validation: acm.CertificateValidation.fromDnsMultiZone(validationMap),
+        validation: acm.CertificateValidation.fromDns(), // DNS validation without hosted zone reference
         certificateName: `stage-b-ssl-${sortedDomains.join('-').replace(/\./g, '-')}`,
       });
 
@@ -81,6 +59,13 @@ export class SslCertificateStack extends cdk.Stack {
         value: this.certificate.certificateArn,
         description: 'SSL Certificate ARN (newly created)',
         exportName: 'StageBSslCertificateArn',
+      });
+
+      // Output DNS validation records for infrastructure account Route53 management
+      new cdk.CfnOutput(this, 'CertificateValidationRecordsOutput', {
+        value: 'Check ACM console for DNS validation records to add to infrastructure account Route53',
+        description: 'DNS validation records needed in infrastructure account',
+        exportName: 'StageBValidationRecords',
       });
     }
 
@@ -90,10 +75,6 @@ export class SslCertificateStack extends cdk.Stack {
       domainName: `${distributionId}.cloudfront.net`, // Standard CloudFront domain format
     });
 
-    // Note: CloudFront distribution updates require a more complex approach
-    // We'll use a custom resource or AWS SDK calls in the deployment script
-    // because CDK cannot directly modify imported distributions
-    
     // Output the distribution information
     new cdk.CfnOutput(this, 'DistributionIdOutput', {
       value: this.distribution.distributionId,
@@ -114,6 +95,19 @@ export class SslCertificateStack extends cdk.Stack {
       exportName: 'StageBSslDomains',
     });
 
+    // Output account information for cross-account operations
+    new cdk.CfnOutput(this, 'InfraAccountIdOutput', {
+      value: infraAccountId,
+      description: 'Infrastructure Account ID (for Route53 DNS validation)',
+      exportName: 'StageBInfraAccountId',
+    });
+
+    new cdk.CfnOutput(this, 'TargetAccountIdOutput', {
+      value: targetAccountId,
+      description: 'Target Account ID (where certificate is created)',
+      exportName: 'StageBTargetAccountId',
+    });
+
     // Output validation status
     new cdk.CfnOutput(this, 'ValidationMethodOutput', {
       value: 'DNS',
@@ -121,17 +115,11 @@ export class SslCertificateStack extends cdk.Stack {
       exportName: 'StageBValidationMethod',
     });
 
-    // Output hosted zones information
-    const hostedZoneInfo = hostedZones.map(zone => `${zone.domain}:${zone.zoneId}`).join(',');
-    new cdk.CfnOutput(this, 'HostedZonesOutput', {
-      value: hostedZoneInfo,
-      description: 'Route53 Hosted Zones Used',
-      exportName: 'StageBHostedZones',
-    });
-
     // Tags for resource identification
     cdk.Tags.of(this).add('Stage', 'B-SSL');
     cdk.Tags.of(this).add('Component', 'SSL-Certificate');
-    cdk.Tags.of(this).add('Domains', sortedDomains.join(','));
+    cdk.Tags.of(this).add('Environment', targetAccountId);
+    cdk.Tags.of(this).add('InfrastructureAccount', infraAccountId);
+    cdk.Tags.of(this).add('DomainCount', sortedDomains.length.toString());
   }
 } 

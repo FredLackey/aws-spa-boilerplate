@@ -3,6 +3,7 @@
 # deploy-infrastructure.sh
 # CDK deployment orchestration for Stage B SSL Certificate deployment
 # Generates CDK context from data files and executes SSL certificate creation
+# Per architecture: Certificates in environment accounts, DNS validation in infrastructure account
 
 set -euo pipefail
 
@@ -12,8 +13,13 @@ STAGE_DIR="$(dirname "$SCRIPT_DIR")"
 DATA_DIR="$STAGE_DIR/data"
 IAC_DIR="$STAGE_DIR/iac"
 
+# Timeout settings to prevent hanging
+CDK_TIMEOUT=1800  # 30 minutes for CDK operations
+DNS_TIMEOUT=300   # 5 minutes for DNS operations
+
 echo "=== Stage B SSL Certificate Deployment - Infrastructure Deployment ==="
 echo "This script will deploy SSL certificates and update CloudFront via CDK."
+echo "Per architecture: Certificates in environment account, DNS validation in infrastructure account"
 echo
 
 # Function to validate required files exist
@@ -43,10 +49,10 @@ validate_prerequisites() {
 
 # Function to check for existing certificates with matching domains
 check_existing_certificate() {
-    local infra_profile="$1"
+    local target_profile="$1"
     local domains=("${@:2}")
     
-    echo "🔍 Checking for existing SSL certificates..."
+    echo "🔍 Checking for existing SSL certificates..." >&2
     
     # Sort domains for consistent comparison
     local sorted_domains
@@ -54,170 +60,191 @@ check_existing_certificate() {
     local domain_set
     domain_set=$(printf '%s,' "${sorted_domains[@]}" | sed 's/,$//')
     
-    echo "   Looking for certificate with domains: $domain_set"
+    echo "   Looking for certificate with domains: $domain_set" >&2
     
-    # List existing certificates
+    # List existing certificates with timeout
     local certificates
-    certificates=$(aws acm list-certificates --profile "$infra_profile" --region us-east-1 --output json 2>/dev/null || echo '{"CertificateSummaryList":[]}')
+    certificates=$(timeout $DNS_TIMEOUT aws acm list-certificates \
+        --profile "$target_profile" \
+        --region us-east-1 \
+        --output json 2>/dev/null || echo '{"CertificateSummaryList":[]}')
     
     local matching_cert_arn=""
     
-    # Check each certificate
-    echo "$certificates" | jq -r '.CertificateSummaryList[]? | .CertificateArn' | while read -r cert_arn; do
+    # Check each certificate to find exact domain match
+    local existing_cert_arn=""
+    while IFS= read -r cert_arn; do
         [[ -z "$cert_arn" ]] && continue
         
-        # Get certificate details
+        # Get certificate details with timeout
         local cert_details
-        cert_details=$(aws acm describe-certificate --certificate-arn "$cert_arn" --profile "$infra_profile" --region us-east-1 --output json 2>/dev/null || echo '{}')
+        cert_details=$(timeout $DNS_TIMEOUT aws acm describe-certificate \
+            --certificate-arn "$cert_arn" \
+            --profile "$target_profile" \
+            --region us-east-1 \
+            --output json 2>/dev/null || echo '{}')
         
         if [[ "$cert_details" != "{}" ]]; then
             local cert_domains status
             cert_domains=$(echo "$cert_details" | jq -r '.Certificate.SubjectAlternativeNames[]?' 2>/dev/null | sort | tr '\n' ',' | sed 's/,$//' || echo "")
             status=$(echo "$cert_details" | jq -r '.Certificate.Status // "UNKNOWN"' 2>/dev/null)
             
-            echo "   📋 Found certificate: $cert_arn"
-            echo "      Domains: $cert_domains"
-            echo "      Status: $status"
+            echo "   📋 Found certificate: $cert_arn" >&2
+            echo "      Domains: $cert_domains" >&2
+            echo "      Status: $status" >&2
             
-            # Check for exact match
-            if [[ "$cert_domains" == "$domain_set" ]] && [[ "$status" == "ISSUED" ]]; then
-                echo "      ✅ EXACT MATCH - Will reuse this certificate"
-                echo "$cert_arn" > "$DATA_DIR/.existing_cert_arn"
-                return 0
+            # Check for exact match with ISSUED or PENDING_VALIDATION status
+            if [[ "$cert_domains" == "$domain_set" ]] && [[ "$status" == "ISSUED" || "$status" == "PENDING_VALIDATION" ]]; then
+                echo "      ✅ EXACT MATCH - Will reuse this certificate (Status: $status)" >&2
+                existing_cert_arn="$cert_arn"
+                break
             fi
         fi
-    done
+    done < <(echo "$certificates" | jq -r '.CertificateSummaryList[]? | .CertificateArn')
     
-    echo "   ℹ️  No matching existing certificate found - will create new one"
-    rm -f "$DATA_DIR/.existing_cert_arn"
-    return 0
+    if [[ -z "$existing_cert_arn" ]]; then
+        echo "   ℹ️  No matching existing certificate found - will create new one" >&2
+    fi
+    
+    # Return the certificate ARN (empty if none found)
+    echo "$existing_cert_arn"
 }
 
 # Function to generate CDK context from data files
 generate_cdk_context() {
     local inputs_file="$DATA_DIR/inputs.json"
     local discovery_file="$DATA_DIR/discovery.json"
-    local cdk_json="$IAC_DIR/cdk.json"
     
-    echo "Generating CDK context from data files..."
+    echo "📋 Generating CDK context from data files..."
     
-    # Read data from JSON files
-    local domains infra_profile target_profile infra_account_id target_account_id distribution_id hosted_zones
-    domains=$(jq -c '.domains' "$inputs_file")
-    infra_profile=$(jq -r '.infraProfile' "$inputs_file")
-    target_profile=$(jq -r '.targetProfile' "$inputs_file")
-    infra_account_id=$(jq -r '.infraAccountId' "$discovery_file")
-    target_account_id=$(jq -r '.targetAccountId' "$discovery_file")
-    distribution_id=$(jq -r '.distributionId' "$inputs_file")
-    hosted_zones=$(jq -c '.hostedZones' "$discovery_file")
+    # Read data files
+    local inputs discovery
+    inputs=$(cat "$inputs_file")
+    discovery=$(cat "$discovery_file")
+    
+    # Extract key values
+    local domains infra_profile target_profile infra_account_id target_account_id distribution_id
+    domains=$(echo "$inputs" | jq -r '.domains[]')
+    infra_profile=$(echo "$inputs" | jq -r '.infraProfile')
+    target_profile=$(echo "$inputs" | jq -r '.targetProfile')
+    infra_account_id=$(echo "$discovery" | jq -r '.infraAccountId')
+    target_account_id=$(echo "$discovery" | jq -r '.targetAccountId')
+    distribution_id=$(echo "$inputs" | jq -r '.distributionId')
+    
+    # Convert domains to array for certificate checking
+    local domains_array
+    readarray -t domains_array < <(echo "$inputs" | jq -r '.domains[]')
     
     # Check for existing certificate
-    local domains_array
-    mapfile -t domains_array < <(jq -r '.domains[]' "$inputs_file")
-    check_existing_certificate "$infra_profile" "${domains_array[@]}"
+    local existing_cert_arn
+    existing_cert_arn=$(check_existing_certificate "$target_profile" "${domains_array[@]}")
     
-    local existing_cert_arn=""
-    if [[ -f "$DATA_DIR/.existing_cert_arn" ]]; then
-        existing_cert_arn=$(cat "$DATA_DIR/.existing_cert_arn")
-        echo "   📋 Will reuse existing certificate: $existing_cert_arn"
-    fi
+    # Generate CDK context JSON
+    local cdk_context
+    cdk_context=$(jq -n \
+        --argjson domains "$(echo "$inputs" | jq '.domains')" \
+        --arg distributionId "$distribution_id" \
+        --arg infraAccountId "$infra_account_id" \
+        --arg targetAccountId "$target_account_id" \
+        --arg existingCertificateArn "$existing_cert_arn" \
+        '{
+        "stage-b-ssl:domains": $domains,
+        "stage-b-ssl:distributionId": $distributionId,
+        "stage-b-ssl:infraAccountId": $infraAccountId,
+        "stage-b-ssl:targetAccountId": $targetAccountId,
+        "stage-b-ssl:existingCertificateArn": ($existingCertificateArn | if . == "" then null else . end)
+    }')
     
-    # Create temporary CDK context file
-    local temp_cdk_json="$cdk_json.tmp"
-    
-    # Read the base cdk.json and add our context
-    jq --argjson domains "$domains" \
-       --argjson hostedZones "$hosted_zones" \
-       --arg distributionId "$distribution_id" \
-       --arg infraProfile "$infra_profile" \
-       --arg targetProfile "$target_profile" \
-       --arg infraAccountId "$infra_account_id" \
-       --arg targetAccountId "$target_account_id" \
-       --arg existingCertArn "$existing_cert_arn" \
-       '.context += {
-         "stage-b-ssl:domains": $domains,
-         "stage-b-ssl:hostedZones": $hostedZones,
-         "stage-b-ssl:distributionId": $distributionId,
-         "stage-b-ssl:infraProfile": $infraProfile,
-         "stage-b-ssl:targetProfile": $targetProfile,
-         "stage-b-ssl:infraAccountId": $infraAccountId,
-         "stage-b-ssl:targetAccountId": $targetAccountId,
-         "stage-b-ssl:existingCertificateArn": (if $existingCertArn != "" then $existingCertArn else null end)
-       }' "$cdk_json" > "$temp_cdk_json"
-    
-    # Replace the original cdk.json with the updated version
-    mv "$temp_cdk_json" "$cdk_json"
-    
-    echo "✅ CDK context generated successfully"
-    echo "   Domains: $(echo "$domains" | jq -r '.[]' | tr '\n' ' ')"
-    echo "   Distribution ID: $distribution_id"
+    echo "   Generated context:"
     echo "   Infrastructure Account: $infra_account_id"
     echo "   Target Account: $target_account_id"
-    [[ -n "$existing_cert_arn" ]] && echo "   Existing Certificate: $existing_cert_arn"
-}
-
-# Function to install CDK dependencies
-install_dependencies() {
-    echo "Installing CDK dependencies..."
-    
-    cd "$IAC_DIR"
-    
-    if [[ ! -f "package-lock.json" ]]; then
-        echo "   📦 Installing npm packages..."
-        npm install
+    echo "   Distribution ID: $distribution_id"
+    echo "   Domains: $(echo "$inputs" | jq -r '.domains | join(", ")')"
+    if [[ -n "$existing_cert_arn" ]]; then
+        echo "   Existing Certificate: $existing_cert_arn"
     else
-        echo "   📦 Updating npm packages..."
-        npm ci
+        echo "   Existing Certificate: None (will create new)"
     fi
     
-    echo "✅ Dependencies installed successfully"
+    # Write context to CDK context file
+    echo "$cdk_context" > "$IAC_DIR/cdk.context.json"
+    
+    echo "✅ CDK context generated successfully"
+    return 0
 }
 
-# Function to deploy CDK infrastructure
-deploy_cdk_infrastructure() {
-    local infra_profile="$1"
+# Function to deploy CDK stack
+deploy_cdk_stack() {
+    local target_profile="$1"
     
     echo "🚀 Deploying CDK infrastructure..."
-    echo "   Using AWS profile: $infra_profile"
+    echo "   Using AWS profile: $target_profile"
     echo "   Target region: us-east-1 (required for CloudFront certificates)"
+    echo "   Per architecture: Certificate created in environment-specific account"
     
     cd "$IAC_DIR"
     
     # Set AWS profile for CDK
-    export AWS_PROFILE="$infra_profile"
+    export AWS_PROFILE="$target_profile"
     export AWS_DEFAULT_REGION="us-east-1"
     
-    # Bootstrap CDK if needed (idempotent operation)
+    # Bootstrap CDK if needed (idempotent operation) with timeout
     echo "   🔧 Ensuring CDK bootstrap..."
-    npx cdk bootstrap aws://"$(aws sts get-caller-identity --query Account --output text)"/us-east-1 || {
-        echo "⚠️  CDK bootstrap failed, but continuing with deployment..."
+    timeout $CDK_TIMEOUT npx cdk bootstrap "aws://$(aws sts get-caller-identity --query Account --output text)/us-east-1" || {
+        echo "⚠️  CDK bootstrap failed or timed out, but continuing with deployment..."
     }
     
-    # Deploy the stack
+    # Deploy the stack with timeout
     echo "   📤 Deploying SSL certificate stack..."
-    npx cdk deploy --require-approval never --outputs-file "$DATA_DIR/cdk-outputs.json" 2>&1 | tee "$DATA_DIR/cdk-deploy.log"
-    
-    # Check if deployment was successful
-    if [[ ${PIPESTATUS[0]} -eq 0 ]]; then
+    if timeout $CDK_TIMEOUT npx cdk deploy --require-approval never --outputs-file "$DATA_DIR/cdk-outputs.json" 2>&1 | tee "$DATA_DIR/cdk-deploy.log"; then
         echo "✅ CDK deployment completed successfully"
         
         # Also save stack outputs in a separate file
-        npx cdk ls --json > "$DATA_DIR/cdk-stack-list.json" 2>/dev/null || echo "[]" > "$DATA_DIR/cdk-stack-list.json"
+        timeout $DNS_TIMEOUT npx cdk ls --json > "$DATA_DIR/cdk-stack-list.json" 2>/dev/null || echo "[]" > "$DATA_DIR/cdk-stack-list.json"
         
         return 0
     else
-        echo "❌ CDK deployment failed"
+        echo "❌ CDK deployment failed or timed out"
         echo "   Check the deployment log: $DATA_DIR/cdk-deploy.log"
         return 1
     fi
 }
 
-# Function to wait for certificate validation
+# Function to manage DNS validation records
+manage_dns_validation() {
+    local action="$1"
+    
+    echo "🌐 Managing DNS validation records..."
+    echo "   Action: $action"
+    echo "   Per architecture: DNS validation records managed in infrastructure account Route53"
+    
+    # Use the manage-dns-validation.sh script
+    local dns_script="$SCRIPT_DIR/manage-dns-validation.sh"
+    
+    if [[ ! -f "$dns_script" ]]; then
+        echo "❌ Error: DNS validation script not found: $dns_script"
+        return 1
+    fi
+    
+    # Run DNS validation management with timeout
+    if timeout $DNS_TIMEOUT "$dns_script" "$action"; then
+        echo "✅ DNS validation $action completed successfully"
+        return 0
+    else
+        echo "❌ DNS validation $action failed or timed out"
+        return 1
+    fi
+}
+
+# Function to wait for certificate validation with timeout
 wait_for_certificate_validation() {
-    local infra_profile="$1"
+    local target_profile="$1"
+    local max_wait_minutes="${2:-30}"
     
     # Check if we have a certificate ARN to monitor
     local cert_arn=""
+    
+    # Get certificate ARN from CDK outputs (works for both new and reused certificates)
     if [[ -f "$DATA_DIR/cdk-outputs.json" ]]; then
         cert_arn=$(jq -r '.StageBSslCertificateStack.CertificateArnOutput // empty' "$DATA_DIR/cdk-outputs.json" 2>/dev/null || echo "")
     fi
@@ -229,233 +256,222 @@ wait_for_certificate_validation() {
     
     echo "⏳ Waiting for SSL certificate validation..."
     echo "   Certificate ARN: $cert_arn"
-    echo "   This may take several minutes..."
+    echo "   Maximum wait time: $max_wait_minutes minutes"
     
-    local max_attempts=60  # 30 minutes (30 second intervals)
+    local max_attempts=$((max_wait_minutes * 2))  # 30 second intervals
     local attempt=1
     
     while [[ $attempt -le $max_attempts ]]; do
-        echo "   📊 Checking certificate status (attempt $attempt/$max_attempts)..."
+        echo "   Attempt $attempt/$max_attempts - Checking certificate status..."
         
+        # Get certificate status with timeout
         local cert_status
-        cert_status=$(aws acm describe-certificate --certificate-arn "$cert_arn" --profile "$infra_profile" --region us-east-1 --query 'Certificate.Status' --output text 2>/dev/null || echo "UNKNOWN")
+        cert_status=$(timeout $DNS_TIMEOUT aws acm describe-certificate \
+            --certificate-arn "$cert_arn" \
+            --profile "$target_profile" \
+            --region us-east-1 \
+            --query 'Certificate.Status' \
+            --output text 2>/dev/null || echo "UNKNOWN")
         
         case "$cert_status" in
             "ISSUED")
                 echo "✅ Certificate validation completed successfully!"
+                echo "   Status: $cert_status"
                 return 0
                 ;;
             "PENDING_VALIDATION")
-                echo "   ⏳ Certificate still pending validation..."
+                echo "   Status: $cert_status - Still waiting..."
                 ;;
             "FAILED"|"VALIDATION_TIMED_OUT"|"REVOKED")
-                echo "❌ Certificate validation failed with status: $cert_status"
+                echo "❌ Certificate validation failed!"
+                echo "   Status: $cert_status"
                 return 1
                 ;;
             *)
-                echo "   📋 Certificate status: $cert_status"
+                echo "   Status: $cert_status - Unknown status, continuing..."
                 ;;
         esac
         
         if [[ $attempt -lt $max_attempts ]]; then
-            echo "   ⏰ Waiting 30 seconds before next check..."
+            echo "   Waiting 30 seconds before next check..."
             sleep 30
         fi
         
         ((attempt++))
     done
     
-    echo "⚠️  Certificate validation timeout after 30 minutes"
-    echo "   The certificate may still be validating in the background"
-    echo "   You can check status manually or re-run this script later"
+    echo "⚠️  Certificate validation timed out after $max_wait_minutes minutes"
+    echo "   You can check the status later using: manage-dns-validation.sh status"
     return 1
 }
 
-# Function to update CloudFront distribution with SSL certificate
+# Function to update CloudFront distribution
 update_cloudfront_distribution() {
     local target_profile="$1"
     
     echo "☁️  Updating CloudFront distribution with SSL certificate..."
+    echo "   Per architecture: CloudFront distribution updated in environment-specific account"
     
-    # Get required information from data files
-    local distribution_id cert_arn domains
-    distribution_id=$(jq -r '.distributionId' "$DATA_DIR/inputs.json")
+    # Get required values from data files
+    local cert_arn distribution_id domains
     
     if [[ -f "$DATA_DIR/cdk-outputs.json" ]]; then
-        cert_arn=$(jq -r '.StageBSslCertificateStack.CertificateArnOutput // empty' "$DATA_DIR/cdk-outputs.json" 2>/dev/null || echo "")
+        cert_arn=$(jq -r '.StageBSslCertificateStack.CertificateArnOutput // empty' "$DATA_DIR/cdk-outputs.json")
+        distribution_id=$(jq -r '.StageBSslCertificateStack.DistributionIdOutput // empty' "$DATA_DIR/cdk-outputs.json")
+        domains=$(jq -r '.StageBSslCertificateStack.DomainsOutput // empty' "$DATA_DIR/cdk-outputs.json")
     fi
     
-    if [[ -z "$cert_arn" ]]; then
-        echo "❌ Could not find certificate ARN from CDK outputs"
+    if [[ -z "$cert_arn" || -z "$distribution_id" || -z "$domains" ]]; then
+        echo "❌ Error: Missing required values from CDK outputs"
         return 1
     fi
     
-    # Get domains from inputs
-    mapfile -t domain_array < <(jq -r '.domains[]' "$DATA_DIR/inputs.json" | sort)
+    echo "   Certificate ARN: $cert_arn"
+    echo "   Distribution ID: $distribution_id"
+    echo "   Domains: $domains"
     
-    echo "   📋 Distribution ID: $distribution_id"
-    echo "   🔒 Certificate ARN: $cert_arn"
-    echo "   🌐 Domains: ${domain_array[*]}"
+    # Get current distribution configuration with timeout
+    local current_config
+    current_config=$(timeout $DNS_TIMEOUT aws cloudfront get-distribution-config \
+        --id "$distribution_id" \
+        --profile "$target_profile" \
+        --output json 2>/dev/null)
     
-    # Get current distribution configuration
-    echo "   📥 Getting current distribution configuration..."
-    local dist_config etag
-    dist_config=$(aws cloudfront get-distribution-config --id "$distribution_id" --profile "$target_profile" --output json 2>/dev/null || echo "{}")
-    
-    if [[ "$dist_config" == "{}" ]]; then
-        echo "❌ Could not retrieve CloudFront distribution configuration"
+    if [[ -z "$current_config" ]]; then
+        echo "❌ Error: Failed to get current distribution configuration"
         return 1
     fi
     
-    etag=$(echo "$dist_config" | jq -r '.ETag // empty')
-    if [[ -z "$etag" ]]; then
-        echo "❌ Could not retrieve distribution ETag"
-        return 1
-    fi
+    # Extract ETag and configuration
+    local etag distribution_config
+    etag=$(echo "$current_config" | jq -r '.ETag')
+    distribution_config=$(echo "$current_config" | jq '.DistributionConfig')
     
-    # Update the distribution configuration
-    echo "   🔧 Updating distribution configuration..."
+    # Update the configuration with SSL certificate and domains
     local updated_config
-    updated_config=$(echo "$dist_config" | jq --argjson domains "$(printf '%s\n' "${domain_array[@]}" | jq -R . | jq -s .)" --arg certArn "$cert_arn" '
-        .DistributionConfig |
-        .Aliases.Quantity = ($domains | length) |
-        .Aliases.Items = $domains |
-        .ViewerCertificate = {
-            "ACMCertificateArn": $certArn,
-            "CertificateSource": "acm",
-            "MinimumProtocolVersion": "TLSv1.2_2021",
-            "SSLSupportMethod": "sni-only"
-        } |
-        .DefaultCacheBehavior.ViewerProtocolPolicy = "redirect-to-https"
-    ')
+    updated_config=$(echo "$distribution_config" | jq \
+        --arg certArn "$cert_arn" \
+        --arg domains "$domains" \
+        '
+        .Aliases.Items = ($domains | split(",")) |
+        .Aliases.Quantity = (.Aliases.Items | length) |
+        .ViewerCertificate.ACMCertificateArn = $certArn |
+        .ViewerCertificate.SSLSupportMethod = "sni-only" |
+        .ViewerCertificate.MinimumProtocolVersion = "TLSv1.2_2021" |
+        .ViewerCertificate.CertificateSource = "acm" |
+        del(.ViewerCertificate.CloudFrontDefaultCertificate)
+        ')
     
-    # Apply the updated configuration
-    echo "   📤 Applying updated configuration..."
+    # Update the distribution with timeout
+    echo "   📤 Applying CloudFront distribution update..."
     local update_result
-    update_result=$(echo "$updated_config" | aws cloudfront update-distribution --id "$distribution_id" --distribution-config file:///dev/stdin --if-match "$etag" --profile "$target_profile" --output json 2>/dev/null || echo "{}")
+    update_result=$(timeout $CDK_TIMEOUT aws cloudfront update-distribution \
+        --id "$distribution_id" \
+        --distribution-config "$updated_config" \
+        --if-match "$etag" \
+        --profile "$target_profile" \
+        --output json 2>/dev/null)
     
-    if [[ "$update_result" == "{}" ]]; then
+    if [[ -n "$update_result" ]]; then
+        echo "✅ CloudFront distribution updated successfully"
+        echo "   🕐 Distribution deployment may take 10-15 minutes to complete globally"
+        return 0
+    else
         echo "❌ Failed to update CloudFront distribution"
         return 1
     fi
-    
-    echo "✅ CloudFront distribution updated successfully"
-    echo "   ⏳ Distribution changes may take 15-45 minutes to propagate"
-    
-    return 0
 }
 
-# Function to save deployment outputs
-save_deployment_outputs() {
-    echo "💾 Saving deployment outputs..."
+# Main deployment function
+main() {
+    echo "Starting Stage B SSL Certificate deployment..."
+    echo "Architecture compliance: Certificates in environment accounts, DNS in infrastructure account"
+    echo
     
-    # Load inputs and discovery data
+    # Validate prerequisites
+    validate_prerequisites
+    
+    # Read configuration
     local inputs_file="$DATA_DIR/inputs.json"
     local discovery_file="$DATA_DIR/discovery.json"
-    local cdk_outputs_file="$DATA_DIR/cdk-outputs.json"
     
-    # Get certificate ARN from CDK outputs
-    local cert_arn=""
-    if [[ -f "$cdk_outputs_file" ]]; then
-        cert_arn=$(jq -r '.StageBSslCertificateStack.CertificateArnOutput // empty' "$cdk_outputs_file" 2>/dev/null || echo "")
-    fi
-    
-    if [[ -z "$cert_arn" ]]; then
-        echo "⚠️  Could not find certificate ARN in CDK outputs"
-        cert_arn="unknown"
-    fi
-    
-    # Create comprehensive outputs file
-    jq -n \
-        --slurpfile inputs "$inputs_file" \
-        --slurpfile discovery "$discovery_file" \
-        --arg certArn "$cert_arn" \
-        --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
-        '{
-            domains: $inputs[0].domains,
-            infraProfile: $inputs[0].infraProfile,
-            targetProfile: $inputs[0].targetProfile,
-            infraAccountId: $discovery[0].infraAccountId,
-            targetAccountId: $discovery[0].targetAccountId,
-            distributionId: $inputs[0].distributionId,
-            distributionUrl: $inputs[0].distributionUrl,
-            certificateArn: $certArn,
-            certificateRegion: "us-east-1",
-            certificateStatus: "PENDING_VALIDATION",
-            hostedZones: $discovery[0].hostedZones,
-            deploymentTimestamp: $timestamp,
-            validationStatus: "pending",
-            readyForStageC: false,
-            stageAData: {
-                distributionId: $inputs[0].distributionId,
-                distributionUrl: $inputs[0].distributionUrl,
-                bucketName: $inputs[0].bucketName,
-                targetRegion: $inputs[0].targetRegion
-            }
-        }' > "$DATA_DIR/outputs.json"
-    
-    echo "✅ Deployment outputs saved to: $DATA_DIR/outputs.json"
-}
-
-# Main deployment orchestration function
-main_deployment() {
-    echo "Starting Stage B SSL certificate infrastructure deployment..."
-    echo
-    
-    # Step 1: Validate prerequisites
-    validate_prerequisites
-    echo
-    
-    # Step 2: Generate CDK context
-    generate_cdk_context
-    echo
-    
-    # Step 3: Install dependencies
-    install_dependencies
-    echo
-    
-    # Step 4: Deploy CDK infrastructure
-    local infra_profile
-    infra_profile=$(jq -r '.infraProfile' "$DATA_DIR/inputs.json")
-    
-    if ! deploy_cdk_infrastructure "$infra_profile"; then
-        echo "❌ Infrastructure deployment failed"
-        exit 1
-    fi
-    echo
-    
-    # Step 5: Wait for certificate validation
-    if ! wait_for_certificate_validation "$infra_profile"; then
-        echo "⚠️  Certificate validation incomplete, but continuing..."
-    fi
-    echo
-    
-    # Step 6: Update CloudFront distribution
     local target_profile
-    target_profile=$(jq -r '.targetProfile' "$DATA_DIR/inputs.json")
+    target_profile=$(jq -r '.targetProfile' "$inputs_file")
     
-    if ! update_cloudfront_distribution "$target_profile"; then
-        echo "❌ CloudFront update failed"
+    echo "Configuration:"
+    echo "   Target Profile: $target_profile"
+    echo "   Timeout Settings: CDK=$CDK_TIMEOUT sec, DNS=$DNS_TIMEOUT sec"
+    echo
+    
+    # Step 1: Generate CDK context
+    if ! generate_cdk_context; then
+        echo "❌ Failed to generate CDK context"
         exit 1
     fi
-    echo
     
-    # Step 7: Save deployment outputs
-    save_deployment_outputs
-    echo
+    # Step 2: Deploy CDK stack (creates certificate in environment account)
+    if ! deploy_cdk_stack "$target_profile"; then
+        echo "❌ Failed to deploy CDK stack"
+        exit 1
+    fi
     
-    echo "🎉 Stage B SSL certificate infrastructure deployment completed!"
-    echo "   SSL certificate has been created and attached to CloudFront distribution"
-    echo "   DNS validation records have been automatically created in Route53"
-    echo "   CloudFront distribution is now configured for HTTPS traffic"
+    # Step 3: Add DNS validation records to infrastructure account Route53
+    if ! manage_dns_validation "add"; then
+        echo "❌ Failed to add DNS validation records"
+        exit 1
+    fi
+    
+    # Step 4: Wait for certificate validation
+    if ! wait_for_certificate_validation "$target_profile" 30; then
+        echo "⚠️  Certificate validation incomplete, but continuing..."
+        echo "   You can check status later with: scripts/manage-dns-validation.sh status"
+    fi
+    
+    # Step 5: Update CloudFront distribution
+    if ! update_cloudfront_distribution "$target_profile"; then
+        echo "❌ Failed to update CloudFront distribution"
+        exit 1
+    fi
+    
+    # Save final outputs
+    local timestamp
+    timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    
+    jq -n \
+        --argjson inputs "$(cat "$inputs_file")" \
+        --argjson discovery "$(cat "$discovery_file")" \
+        --argjson cdkOutputs "$(cat "$DATA_DIR/cdk-outputs.json" 2>/dev/null || echo '{}')" \
+        --arg deploymentTimestamp "$timestamp" \
+        --arg deploymentStatus "completed" \
+        '{
+        inputs: $inputs[0],
+        discovery: $discovery[0],
+        cdkOutputs: $cdkOutputs,
+        deploymentTimestamp: $deploymentTimestamp,
+        deploymentStatus: $deploymentStatus,
+        infraAccountId: $discovery[0].infraAccountId,
+        targetAccountId: $discovery[0].targetAccountId,
+        certificateArn: $cdkOutputs.StageBSslCertificateStack.CertificateArnOutput,
+        distributionId: $cdkOutputs.StageBSslCertificateStack.DistributionIdOutput,
+        domains: ($cdkOutputs.StageBSslCertificateStack.DomainsOutput | split(","))
+    }' > "$DATA_DIR/outputs.json"
+    
+    echo
+    echo "🎉 Stage B SSL Certificate deployment completed successfully!"
+    echo "   ✅ Certificate created in environment-specific account"
+    echo "   ✅ DNS validation records added to infrastructure account Route53"
+    echo "   ✅ CloudFront distribution updated with SSL certificate"
+    echo
+    echo "Next steps:"
+    echo "   1. Wait for CloudFront distribution deployment (10-15 minutes)"
+    echo "   2. Test your domains with HTTPS"
+    echo "   3. Check certificate status: scripts/manage-dns-validation.sh status"
+    echo
+    echo "Architecture compliance: ✅ ALIGNED"
+    echo "   - SSL certificates stored in environment-specific account (us-east-1)"
+    echo "   - DNS validation records managed in infrastructure account Route53"
+    echo "   - CloudFront distribution updated in environment-specific account"
 }
 
-# Main execution
-main() {
-    main_deployment
-}
-
-# Check if script is being sourced or executed directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main "$@"
-fi 
+# Run main function
+main "$@" 

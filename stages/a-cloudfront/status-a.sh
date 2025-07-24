@@ -33,7 +33,7 @@ Options:
 
 Examples:
   $0                                    # Check status using saved configuration
-  $0 --profile bh-fred-sandbox         # Check with specific profile
+  $0 --profile yourawsprofile-sandbox         # Check with specific profile
   $0 --prefix hellospa --watch          # Monitor specific prefix continuously
   $0 --all                              # Show all resources
 

@@ -28,7 +28,7 @@ Required Options:
                            Can be specified multiple times for multi-domain certificates
 
 Examples:
-  $0 -d www.sbx.briskhaven.com -d sbx.briskhaven.com
+  $0 -d www.sbx.yourdomain.com -d sbx.yourdomain.com
   $0 -d api.example.com
   $0 -d www.mysite.com -d mysite.com -d api.mysite.com
 

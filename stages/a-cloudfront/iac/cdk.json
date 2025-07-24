@@ -19,7 +19,7 @@
   "context": {
     "stage-a-cloudfront:distributionPrefix": "hellospa",
     "stage-a-cloudfront:targetRegion": "us-east-1",
-    "stage-a-cloudfront:targetProfile": "bh-fred-sandbox",
+    "stage-a-cloudfront:targetProfile": "yourawsprofile-sandbox",
     "stage-a-cloudfront:infrastructureProfile": "bh-infra",
     "stage-a-cloudfront:targetAccountId": "415730361381",
     "stage-a-cloudfront:infrastructureAccountId": "953082249352",

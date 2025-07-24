@@ -2,7 +2,7 @@
 set -euo pipefail
 
 DISTRIBUTION_ID="E3Q3IZJ1UV53QK"
-PROFILE="bh-fred-sandbox"
+PROFILE="yourawsprofile-sandbox"
 
 echo "🔧 Adding cache behavior for exact /api path (without trailing slash)..."
 

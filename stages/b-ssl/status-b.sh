@@ -32,8 +32,8 @@ Options:
 
 Examples:
   $0                                                    # Check status using saved configuration
-  $0 --infraprofile bh-fred-infra                      # Check with specific infrastructure profile
-  $0 --domains www.sbx.briskhaven.com,sbx.briskhaven.com --watch  # Monitor specific domains continuously
+  $0 --infraprofile yourawsprofile-infra                      # Check with specific infrastructure profile
+  $0 --domains www.sbx.yourdomain.com,sbx.yourdomain.com --watch  # Monitor specific domains continuously
   $0 --all                                              # Show all resources
 
 EOF

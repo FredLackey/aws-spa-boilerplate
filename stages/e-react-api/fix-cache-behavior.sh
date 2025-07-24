@@ -2,7 +2,7 @@
 set -euo pipefail
 
 DISTRIBUTION_ID="E3Q3IZJ1UV53QK"
-PROFILE="bh-fred-sandbox"
+PROFILE="yourawsprofile-sandbox"
 LAMBDA_URL="https://ljol5hyg76f3amvxxzdjfta5vi0cpqjv.lambda-url.us-east-1.on.aws/"
 
 echo "🔧 Fixing CloudFront cache behavior..."
@@ -59,6 +59,6 @@ INVALIDATION_ID=$(aws cloudfront create-invalidation \
     --query 'Invalidation.Id' --output text)
 
 echo "✅ Cache invalidation created: $INVALIDATION_ID"
-echo "⏳ Wait 5-10 minutes then test: https://sbx.briskhaven.com/api/"
+echo "⏳ Wait 5-10 minutes then test: https://sbx.yourdomain.com/api/"
 
 rm -f /tmp/current-config.json /tmp/fixed-config.json /tmp/update-result.json

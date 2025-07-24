@@ -19,7 +19,7 @@
   "context": {
     "stage-c-lambda:distributionPrefix": "hellospa",
     "stage-c-lambda:targetRegion": "us-east-1",
-    "stage-c-lambda:targetProfile": "bh-fred-sandbox",
+    "stage-c-lambda:targetProfile": "yourawsprofile-sandbox",
     "stage-c-lambda:infrastructureProfile": "bh-infra",
     "stage-c-lambda:targetAccountId": "415730361381",
     "stage-c-lambda:infrastructureAccountId": "953082249352",

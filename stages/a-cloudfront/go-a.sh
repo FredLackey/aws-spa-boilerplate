@@ -24,7 +24,7 @@ Required Options:
   --vpc VPC_ID              Target VPC ID
 
 Example:
-  $0 --infraprofile bh-fred-infra --targetprofile bh-fred-sandbox --prefix hellospa --region us-east-1 --vpc vpc-0f59afe5908b84a1a
+  $0 --infraprofile yourawsprofile-infra --targetprofile yourawsprofile-sandbox --prefix hellospa --region us-east-1 --vpc vpc-0f59afe5908b84a1a
 
 EOF
 }

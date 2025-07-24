@@ -8,7 +8,7 @@ The simplest way to test your Lambda function:
 
 ```bash
 aws lambda invoke --function-name hellospa-api \
-  --profile bh-fred-sandbox --region us-east-1 \
+  --profile yourawsprofile-sandbox --region us-east-1 \
   --payload '{}' response.json && cat response.json
 ```
 

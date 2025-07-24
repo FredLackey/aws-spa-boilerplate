@@ -18,7 +18,7 @@ function App() {
           controller.abort()
         }, 30000) // 30 second timeout
         
-        const response = await fetch('/api', {
+        const response = await fetch('/api/', {
           method: 'GET',
           signal: controller.signal
         })

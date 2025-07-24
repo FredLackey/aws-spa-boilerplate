@@ -1,0 +1,21 @@
+{
+  "version": "45.0.0",
+  "files": {
+    "4b3251bb0e38661d9748f3ae3f99d5329dc248ecc5225e736f20f546542f6853": {
+      "displayName": "StageEReactApiStack Template",
+      "source": {
+        "path": "StageEReactApiStack.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "415730361381-us-east-1-f129c717": {
+          "bucketName": "cdk-hnb659fds-assets-415730361381-us-east-1",
+          "objectKey": "4b3251bb0e38661d9748f3ae3f99d5329dc248ecc5225e736f20f546542f6853.json",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::415730361381:role/cdk-hnb659fds-file-publishing-role-415730361381-us-east-1"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}

@@ -1,19 +1,19 @@
 {
-  "stageD": {
+  "stageE": {
     "distributionId": "E3Q3IZJ1UV53QK",
     "bucketName": "hellospa-content-415730361381",
     "primaryDomain": "sbx.briskhaven.com",
     "lambdaFunctionUrl": "https://ljol5hyg76f3amvxxzdjfta5vi0cpqjv.lambda-url.us-east-1.on.aws/",
     "distributionUrl": "https://d3vg033g49esvn.cloudfront.net",
     "primaryDomainUrl": "https://sbx.briskhaven.com",
-    "invalidationId": "IB4D5J3F6VJAZSTWD58GJSMMIM",
-    "deploymentTimestamp": "2025-07-24T14:05:58Z"
+    "invalidationId": "I6K7VDJUMBJCHUWVDD5R7R090C",
+    "deploymentTimestamp": "2025-07-24T16:35:42Z"
   },
-  "reactApplicationDeployed": true,
+  "reactApiApplicationDeployed": true,
   "cloudfrontCacheInvalidated": true,
-  "contentDeploymentComplete": true,
-  "readyForStageE": true,
-  "deploymentTimestamp": "2025-07-24T14:05:58Z",
+  "apiIntegrationComplete": true,
+  "stageEComplete": true,
+  "deploymentTimestamp": "2025-07-24T16:35:42Z",
   "urls": {
     "cloudfront": "https://d3vg033g49esvn.cloudfront.net",
     "primaryDomain": "https://sbx.briskhaven.com",
@@ -22,5 +22,5 @@
   "distributionId": "E3Q3IZJ1UV53QK",
   "bucketName": "hellospa-content-415730361381",
   "primaryDomain": "sbx.briskhaven.com",
-  "invalidationId": "IB4D5J3F6VJAZSTWD58GJSMMIM"
+  "invalidationId": "I6K7VDJUMBJCHUWVDD5R7R090C"
 }

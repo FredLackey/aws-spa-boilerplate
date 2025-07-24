@@ -48,10 +48,10 @@ export class ReactApiStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // Import existing S3 bucket from Stage A (do not create new one)
+    // Import existing S3 bucket from Stage A
     this.s3Bucket = s3.Bucket.fromBucketName(this, 'ImportedS3Bucket', bucketName);
 
-    // Import existing CloudFront distribution from Stage A (do not modify)
+    // Import existing CloudFront distribution from Stage A
     this.cloudFrontDistribution = cloudfront.Distribution.fromDistributionAttributes(this, 'ImportedCloudFrontDistribution', {
       distributionId: distributionId,
       domainName: `${distributionId}.cloudfront.net`,
@@ -60,7 +60,69 @@ export class ReactApiStack extends cdk.Stack {
     // Store the domain name for outputs since IDistribution doesn't expose it
     const distributionDomainName = `${distributionId}.cloudfront.net`;
 
-    // Create IAM role for React API deployment automation (if needed for future automation)
+    // Create a simple custom resource to update cache behaviors using CloudFormation
+    const cfnDistribution = new cloudfront.CfnDistribution(this, 'UpdatedDistribution', {
+      distributionConfig: {
+        aliases: [primaryDomain, `www.${primaryDomain}`],
+        enabled: true,
+        httpVersion: 'http2',
+        ipv6Enabled: true,
+        priceClass: 'PriceClass_100',
+        origins: [
+          {
+            id: 'S3Origin',
+            domainName: `${bucketName}.s3.${targetRegion}.amazonaws.com`,
+            s3OriginConfig: {
+              originAccessIdentity: '',
+            },
+            originAccessControlId: 'E12JBGQ3RC7J38', // From Stage A
+          },
+          {
+            id: 'LambdaOrigin',
+            domainName: lambdaFunctionUrl.replace('https://', '').split('/')[0],
+            customOriginConfig: {
+              httpPort: 443,
+              httpsPort: 443,
+              originProtocolPolicy: 'https-only',
+              originSslProtocols: ['TLSv1.2'],
+              originReadTimeout: 30,
+              originKeepaliveTimeout: 5,
+            },
+          },
+        ],
+        defaultCacheBehavior: {
+          targetOriginId: 'S3Origin',
+          viewerProtocolPolicy: 'redirect-to-https',
+          cachePolicyId: '658327ea-f89d-4fab-a63d-7e88639e58f6', // CachingOptimized
+          originRequestPolicyId: '88a5eaf4-2fd4-4709-b370-b4c650ea3fcf', // CORS-S3Origin
+          compress: true,
+          allowedMethods: ['GET', 'HEAD'],
+          cachedMethods: ['GET', 'HEAD'],
+        },
+        cacheBehaviors: [
+          {
+            pathPattern: '/api/*',
+            targetOriginId: 'LambdaOrigin',
+            viewerProtocolPolicy: 'redirect-to-https',
+            cachePolicyId: '4135ea2d-6df8-44a3-9df3-4b5a84be39ad', // CachingDisabled
+            originRequestPolicyId: '88a5eaf4-2fd4-4709-b370-b4c650ea3fcf', // CORS-S3Origin
+            compress: true,
+            allowedMethods: ['GET', 'HEAD', 'OPTIONS', 'PUT', 'POST', 'PATCH', 'DELETE'],
+            cachedMethods: ['GET', 'HEAD'],
+          },
+        ],
+        viewerCertificate: {
+          acmCertificateArn: certificateArn,
+          sslSupportMethod: 'sni-only',
+          minimumProtocolVersion: 'TLSv1.2_2021',
+        },
+      },
+    });
+
+    // Override the physical ID to match the existing distribution
+    cfnDistribution.overrideLogicalId('ExistingDistribution');
+
+    // Create IAM role for React API deployment automation
     this.deploymentRole = new iam.Role(this, 'ReactApiDeploymentRole', {
       roleName: `${distributionPrefix}-react-api-deployment-role`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
@@ -94,9 +156,6 @@ export class ReactApiStack extends cdk.Stack {
                 'cloudfront:CreateInvalidation',
                 'cloudfront:GetInvalidation',
                 'cloudfront:ListInvalidations',
-                'cloudfront:UpdateDistribution',
-                'cloudfront:GetDistribution',
-                'cloudfront:GetDistributionConfig',
               ],
               resources: [
                 `arn:aws:cloudfront::${cdk.Aws.ACCOUNT_ID}:distribution/${distributionId}`,
@@ -120,19 +179,6 @@ export class ReactApiStack extends cdk.Stack {
             }),
           ],
         }),
-      },
-    });
-
-    // Create custom resource for API behavior configuration
-    const apiBehaviorConfig = new cdk.CustomResource(this, 'ApiBehaviorConfiguration', {
-      serviceToken: this.createApiBehaviorProvider().serviceToken,
-      properties: {
-        DistributionPrefix: distributionPrefix,
-        DistributionId: distributionId,
-        LambdaFunctionUrl: lambdaFunctionUrl,
-        LambdaFunctionArn: lambdaFunctionArn,
-        PrimaryDomain: primaryDomain,
-        DeploymentTimestamp: new Date().toISOString(),
       },
     });
 
@@ -205,132 +251,5 @@ export class ReactApiStack extends cdk.Stack {
     cdk.Tags.of(this).add('IntegratesWithStageB', 'true');
     cdk.Tags.of(this).add('IntegratesWithStageC', 'true');
     cdk.Tags.of(this).add('IntegratesWithStageD', 'true');
-  }
-
-  /**
-   * Creates a Lambda-backed custom resource provider for API behavior configuration
-   */
-  private createApiBehaviorProvider(): cdk.custom_resources.Provider {
-    // Create a Lambda function for configuring CloudFront API behavior
-    const apiBehaviorLambda = new cdk.aws_lambda.Function(this, 'ApiBehaviorLambda', {
-      runtime: cdk.aws_lambda.Runtime.NODEJS_18_X,
-      handler: 'index.handler',
-      code: cdk.aws_lambda.Code.fromInline(`
-        const AWS = require('aws-sdk');
-        const cloudfront = new AWS.CloudFront();
-        const response = require('cfn-response');
-
-        exports.handler = async (event, context) => {
-          console.log('API Behavior Configuration Event:', JSON.stringify(event, null, 2));
-          
-          try {
-            const { DistributionId, LambdaFunctionUrl, RequestType } = event.ResourceProperties;
-            
-            if (RequestType === 'Create' || RequestType === 'Update') {
-              // Get current distribution configuration
-              const getResult = await cloudfront.getDistributionConfig({
-                Id: DistributionId
-              }).promise();
-              
-              const config = getResult.DistributionConfig;
-              const etag = getResult.ETag;
-              
-              // Extract domain from Lambda Function URL (remove https:// and path)
-              const lambdaOriginDomain = LambdaFunctionUrl.replace('https://', '').split('/')[0];
-              
-              // Add Lambda Function URL as origin if not exists
-              const lambdaOriginId = 'lambda-api-origin';
-              const existingOrigin = config.Origins.Items.find(origin => origin.Id === lambdaOriginId);
-              
-              if (!existingOrigin) {
-                config.Origins.Items.push({
-                  Id: lambdaOriginId,
-                  DomainName: lambdaOriginDomain,
-                  CustomOriginConfig: {
-                    HTTPPort: 443,
-                    HTTPSPort: 443,
-                    OriginProtocolPolicy: 'https-only',
-                  }
-                });
-                config.Origins.Quantity = config.Origins.Items.length;
-              }
-              
-              // Add API behavior if not exists
-              const apiBehavior = {
-                PathPattern: '/api/*',
-                TargetOriginId: lambdaOriginId,
-                ViewerProtocolPolicy: 'redirect-to-https',
-                CachePolicyId: '4135ea2d-6df8-44a3-9df3-4b5a84be39ad', // CachingDisabled policy
-                OriginRequestPolicyId: '88a5eaf4-2fd4-4709-b370-b4c650ea3fcf', // CORS-S3Origin policy
-                Compress: true,
-                AllowedMethods: {
-                  Quantity: 7,
-                  Items: ['GET', 'HEAD', 'OPTIONS', 'PUT', 'POST', 'PATCH', 'DELETE'],
-                  CachedMethods: {
-                    Quantity: 2,
-                    Items: ['GET', 'HEAD']
-                  }
-                }
-              };
-              
-              // Check if API behavior already exists
-              const existingBehavior = config.CacheBehaviors.Items.find(behavior => 
-                behavior.PathPattern === '/api/*'
-              );
-              
-              if (!existingBehavior) {
-                config.CacheBehaviors.Items.unshift(apiBehavior); // Add at beginning for highest precedence
-                config.CacheBehaviors.Quantity = config.CacheBehaviors.Items.length;
-              }
-              
-              // Update distribution
-              await cloudfront.updateDistribution({
-                Id: DistributionId,
-                DistributionConfig: config,
-                IfMatch: etag
-              }).promise();
-              
-              console.log('CloudFront distribution updated with API behavior');
-            }
-            
-            await response.send(event, context, response.SUCCESS, {
-              ApiBehaviorConfigured: 'true',
-              ApiBehaviorPattern: '/api/*',
-              ApiBehaviorPrecedence: '0',
-              Timestamp: new Date().toISOString()
-            });
-            
-          } catch (error) {
-            console.error('Error configuring API behavior:', error);
-            await response.send(event, context, response.FAILED, {
-              Error: error.message
-            });
-          }
-        };
-      `),
-      description: 'Custom resource for CloudFront API behavior configuration',
-      timeout: cdk.Duration.minutes(10),
-      logRetention: logs.RetentionDays.ONE_WEEK,
-    });
-
-    // Grant the Lambda function permissions to modify CloudFront
-    apiBehaviorLambda.addToRolePolicy(new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
-      actions: [
-        'cloudfront:GetDistribution',
-        'cloudfront:GetDistributionConfig',
-        'cloudfront:UpdateDistribution',
-        'cloudfront:CreateInvalidation',
-      ],
-      resources: ['*'], // CloudFront actions don't support resource-level permissions
-    }));
-
-    // Grant the Lambda function permissions to write to the log group
-    this.logGroup.grantWrite(apiBehaviorLambda);
-
-    return new cdk.custom_resources.Provider(this, 'ApiBehaviorProvider', {
-      onEventHandler: apiBehaviorLambda,
-      logRetention: logs.RetentionDays.ONE_WEEK,
-    });
   }
 } 

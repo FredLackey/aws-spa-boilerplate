@@ -1,34 +1,34 @@
 {
   "version": "45.0.0",
   "artifacts": {
-    "StageDReactStack.assets": {
+    "StageEReactApiStack.assets": {
       "type": "cdk:asset-manifest",
       "properties": {
-        "file": "StageDReactStack.assets.json",
+        "file": "StageEReactApiStack.assets.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
       }
     },
-    "StageDReactStack": {
+    "StageEReactApiStack": {
       "type": "aws:cloudformation:stack",
       "environment": "aws://415730361381/us-east-1",
       "properties": {
-        "templateFile": "StageDReactStack.template.json",
+        "templateFile": "StageEReactApiStack.template.json",
         "terminationProtection": false,
         "tags": {
           "DistributionPrefix": "hellospa",
           "PrimaryDomain": "sbx.briskhaven.com",
           "Project": "AWS SPA Boilerplate",
-          "Stage": "D - React"
+          "Stage": "E - React API"
         },
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::415730361381:role/cdk-hnb659fds-deploy-role-415730361381-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::415730361381:role/cdk-hnb659fds-cfn-exec-role-415730361381-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-415730361381-us-east-1/01440953c4359bc6c17584cefa632b2a469401429f1d1ad9e07f7b8240547ec8.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-415730361381-us-east-1/4b3251bb0e38661d9748f3ae3f99d5329dc248ecc5225e736f20f546542f6853.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
-          "StageDReactStack.assets"
+          "StageEReactApiStack.assets"
         ],
         "lookupRole": {
           "arn": "arn:${AWS::Partition}:iam::415730361381:role/cdk-hnb659fds-lookup-role-415730361381-us-east-1",
@@ -37,10 +37,10 @@
         }
       },
       "dependencies": [
-        "StageDReactStack.assets"
+        "StageEReactApiStack.assets"
       ],
       "metadata": {
-        "/StageDReactStack": [
+        "/StageEReactApiStack": [
           {
             "type": "aws:cdk:stack-tags",
             "data": [
@@ -58,12 +58,12 @@
               },
               {
                 "Key": "Stage",
-                "Value": "D - React"
+                "Value": "E - React API"
               }
             ]
           }
         ],
-        "/StageDReactStack/ReactDeploymentLogGroup": [
+        "/StageEReactApiStack/ReactApiDeploymentLogGroup": [
           {
             "type": "aws:cdk:analytics:construct",
             "data": {
@@ -73,13 +73,74 @@
             }
           }
         ],
-        "/StageDReactStack/ReactDeploymentLogGroup/Resource": [
+        "/StageEReactApiStack/ReactApiDeploymentLogGroup/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "ReactDeploymentLogGroup7E27B7A2"
+            "data": "ReactApiDeploymentLogGroup1DB8BA1D"
           }
         ],
-        "/StageDReactStack/ReactDeploymentRole": [
+        "/StageEReactApiStack/ReactApiDistribution": [
+          {
+            "type": "aws:cdk:analytics:construct",
+            "data": {
+              "defaultBehavior": {
+                "origin": "*",
+                "viewerProtocolPolicy": "redirect-to-https",
+                "cachePolicy": {
+                  "cachePolicyId": "*"
+                },
+                "originRequestPolicy": {
+                  "originRequestPolicyId": "*"
+                },
+                "compress": true
+              },
+              "additionalBehaviors": "*",
+              "domainNames": "*",
+              "certificate": "*",
+              "minimumProtocolVersion": "TLSv1.2_2021",
+              "priceClass": "PriceClass_100"
+            }
+          },
+          {
+            "type": "aws:cdk:analytics:method",
+            "data": {
+              "addBehavior": [
+                "*",
+                {},
+                {
+                  "viewerProtocolPolicy": "redirect-to-https",
+                  "cachePolicy": {
+                    "cachePolicyId": "*"
+                  },
+                  "originRequestPolicy": {
+                    "originRequestPolicyId": "*"
+                  },
+                  "allowedMethods": "*",
+                  "compress": true
+                }
+              ]
+            }
+          }
+        ],
+        "/StageEReactApiStack/ReactApiDistribution/Origin1/S3Origin": [
+          {
+            "type": "aws:cdk:analytics:construct",
+            "data": {}
+          }
+        ],
+        "/StageEReactApiStack/ReactApiDistribution/Origin1/S3Origin/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ReactApiDistributionOrigin1S3Origin44AFBD4E"
+          }
+        ],
+        "/StageEReactApiStack/ReactApiDistribution/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ReactApiDistributionEE524FF8"
+          }
+        ],
+        "/StageEReactApiStack/ReactApiDeploymentRole": [
           {
             "type": "aws:cdk:analytics:construct",
             "data": {
@@ -98,440 +159,98 @@
             }
           }
         ],
-        "/StageDReactStack/ReactDeploymentRole/ImportReactDeploymentRole": [
+        "/StageEReactApiStack/ReactApiDeploymentRole/ImportReactApiDeploymentRole": [
           {
             "type": "aws:cdk:analytics:construct",
             "data": "*"
           }
         ],
-        "/StageDReactStack/ReactDeploymentRole/Resource": [
+        "/StageEReactApiStack/ReactApiDeploymentRole/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "ReactDeploymentRoleD1B56A1F"
+            "data": "ReactApiDeploymentRole70270029"
           }
         ],
-        "/StageDReactStack/DeploymentStatusLambda": [
-          {
-            "type": "aws:cdk:analytics:construct",
-            "data": {
-              "runtime": "*",
-              "handler": "*",
-              "code": "*",
-              "description": "*",
-              "timeout": "*",
-              "logRetention": 7
-            }
-          }
-        ],
-        "/StageDReactStack/DeploymentStatusLambda/ServiceRole": [
-          {
-            "type": "aws:cdk:analytics:construct",
-            "data": {
-              "assumedBy": {
-                "principalAccount": "*",
-                "assumeRoleAction": "*"
-              },
-              "managedPolicies": [
-                {
-                  "managedPolicyArn": "*"
-                }
-              ]
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "addToPrincipalPolicy": [
-                {}
-              ]
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "attachInlinePolicy": [
-                "*"
-              ]
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "attachInlinePolicy": [
-                "*"
-              ]
-            }
-          }
-        ],
-        "/StageDReactStack/DeploymentStatusLambda/ServiceRole/ImportServiceRole": [
-          {
-            "type": "aws:cdk:analytics:construct",
-            "data": "*"
-          }
-        ],
-        "/StageDReactStack/DeploymentStatusLambda/ServiceRole/Resource": [
+        "/StageEReactApiStack/ReactApiS3BucketName": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "DeploymentStatusLambdaServiceRoleBB54FAAB"
+            "data": "ReactApiS3BucketName"
           }
         ],
-        "/StageDReactStack/DeploymentStatusLambda/ServiceRole/DefaultPolicy": [
-          {
-            "type": "aws:cdk:analytics:construct",
-            "data": "*"
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "attachToRole": [
-                "*"
-              ]
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "attachToRole": [
-                "*"
-              ]
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "addStatements": [
-                {}
-              ]
-            }
-          }
-        ],
-        "/StageDReactStack/DeploymentStatusLambda/ServiceRole/DefaultPolicy/Resource": [
+        "/StageEReactApiStack/ReactApiCloudFrontDistributionId": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "DeploymentStatusLambdaServiceRoleDefaultPolicy07043F0E"
+            "data": "ReactApiCloudFrontDistributionId"
           }
         ],
-        "/StageDReactStack/DeploymentStatusLambda/Resource": [
+        "/StageEReactApiStack/ReactApiCloudFrontDomainName": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "DeploymentStatusLambda7CE9460B"
+            "data": "ReactApiCloudFrontDomainName"
           }
         ],
-        "/StageDReactStack/DeploymentStatusLambda/LogRetention/Resource": [
+        "/StageEReactApiStack/ReactApiPrimaryDomain": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "DeploymentStatusLambdaLogRetention006488E4"
+            "data": "ReactApiPrimaryDomain"
           }
         ],
-        "/StageDReactStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole": [
-          {
-            "type": "aws:cdk:analytics:construct",
-            "data": {
-              "assumedBy": {
-                "principalAccount": "*",
-                "assumeRoleAction": "*"
-              },
-              "managedPolicies": [
-                {
-                  "managedPolicyArn": "*"
-                }
-              ]
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "addToPrincipalPolicy": [
-                {}
-              ]
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "attachInlinePolicy": [
-                "*"
-              ]
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "attachInlinePolicy": [
-                "*"
-              ]
-            }
-          }
-        ],
-        "/StageDReactStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/ImportServiceRole": [
-          {
-            "type": "aws:cdk:analytics:construct",
-            "data": "*"
-          }
-        ],
-        "/StageDReactStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource": [
+        "/StageEReactApiStack/ReactApiLambdaFunctionUrl": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+            "data": "ReactApiLambdaFunctionUrl"
           }
         ],
-        "/StageDReactStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy": [
-          {
-            "type": "aws:cdk:analytics:construct",
-            "data": "*"
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "attachToRole": [
-                "*"
-              ]
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "attachToRole": [
-                "*"
-              ]
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "addStatements": [
-                {}
-              ]
-            }
-          }
-        ],
-        "/StageDReactStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource": [
+        "/StageEReactApiStack/ReactApiLambdaFunctionArn": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB"
+            "data": "ReactApiLambdaFunctionArn"
           }
         ],
-        "/StageDReactStack/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource": [
+        "/StageEReactApiStack/ReactApiDeploymentRoleArn": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A"
+            "data": "ReactApiDeploymentRoleArn"
           }
         ],
-        "/StageDReactStack/DeploymentStatusProvider/framework-onEvent": [
-          {
-            "type": "aws:cdk:analytics:construct",
-            "data": {
-              "code": "*",
-              "description": "*",
-              "runtime": "*",
-              "handler": "*",
-              "timeout": "*",
-              "logFormat": "*",
-              "applicationLogLevelV2": "FATAL",
-              "logRetention": 7,
-              "logGroup": "*",
-              "vpc": "*",
-              "vpcSubnets": "*",
-              "securityGroups": "*",
-              "role": "*",
-              "functionName": "*",
-              "environmentEncryption": "*"
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "addEnvironment": [
-                "*",
-                "*"
-              ]
-            }
-          }
-        ],
-        "/StageDReactStack/DeploymentStatusProvider/framework-onEvent/ServiceRole": [
-          {
-            "type": "aws:cdk:analytics:construct",
-            "data": {
-              "assumedBy": {
-                "principalAccount": "*",
-                "assumeRoleAction": "*"
-              },
-              "managedPolicies": [
-                {
-                  "managedPolicyArn": "*"
-                }
-              ]
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "addToPrincipalPolicy": [
-                {}
-              ]
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "attachInlinePolicy": [
-                "*"
-              ]
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "attachInlinePolicy": [
-                "*"
-              ]
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "addToPrincipalPolicy": [
-                {}
-              ]
-            }
-          }
-        ],
-        "/StageDReactStack/DeploymentStatusProvider/framework-onEvent/ServiceRole/ImportServiceRole": [
-          {
-            "type": "aws:cdk:analytics:construct",
-            "data": "*"
-          }
-        ],
-        "/StageDReactStack/DeploymentStatusProvider/framework-onEvent/ServiceRole/Resource": [
+        "/StageEReactApiStack/ReactApiLogGroupName": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "DeploymentStatusProviderframeworkonEventServiceRoleD401105C"
+            "data": "ReactApiLogGroupName"
           }
         ],
-        "/StageDReactStack/DeploymentStatusProvider/framework-onEvent/ServiceRole/DefaultPolicy": [
-          {
-            "type": "aws:cdk:analytics:construct",
-            "data": "*"
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "attachToRole": [
-                "*"
-              ]
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "attachToRole": [
-                "*"
-              ]
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "addStatements": [
-                {}
-              ]
-            }
-          },
-          {
-            "type": "aws:cdk:analytics:method",
-            "data": {
-              "addStatements": [
-                {}
-              ]
-            }
-          }
-        ],
-        "/StageDReactStack/DeploymentStatusProvider/framework-onEvent/ServiceRole/DefaultPolicy/Resource": [
+        "/StageEReactApiStack/ReactApiApiBehaviorPattern": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "DeploymentStatusProviderframeworkonEventServiceRoleDefaultPolicyB27360B5"
+            "data": "ReactApiApiBehaviorPattern"
           }
         ],
-        "/StageDReactStack/DeploymentStatusProvider/framework-onEvent/Resource": [
+        "/StageEReactApiStack/ReactApiApiBehaviorPrecedence": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "DeploymentStatusProviderframeworkonEvent9A00EAB0"
+            "data": "ReactApiApiBehaviorPrecedence"
           }
         ],
-        "/StageDReactStack/DeploymentStatusProvider/framework-onEvent/LogRetention/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "DeploymentStatusProviderframeworkonEventLogRetentionB8BAAB6D"
-          }
-        ],
-        "/StageDReactStack/ReactDeploymentStatus": [
-          {
-            "type": "aws:cdk:analytics:construct",
-            "data": "*"
-          }
-        ],
-        "/StageDReactStack/ReactDeploymentStatus/Default": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "ReactDeploymentStatus"
-          }
-        ],
-        "/StageDReactStack/ReactS3BucketName": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "ReactS3BucketName"
-          }
-        ],
-        "/StageDReactStack/ReactCloudFrontDistributionId": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "ReactCloudFrontDistributionId"
-          }
-        ],
-        "/StageDReactStack/ReactCloudFrontDomainName": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "ReactCloudFrontDomainName"
-          }
-        ],
-        "/StageDReactStack/ReactPrimaryDomain": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "ReactPrimaryDomain"
-          }
-        ],
-        "/StageDReactStack/ReactDeploymentRoleArn": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "ReactDeploymentRoleArn"
-          }
-        ],
-        "/StageDReactStack/ReactLogGroupName": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "ReactLogGroupName"
-          }
-        ],
-        "/StageDReactStack/CDKMetadata/Default": [
+        "/StageEReactApiStack/CDKMetadata/Default": [
           {
             "type": "aws:cdk:logicalId",
             "data": "CDKMetadata"
           }
         ],
-        "/StageDReactStack/BootstrapVersion": [
+        "/StageEReactApiStack/BootstrapVersion": [
           {
             "type": "aws:cdk:logicalId",
             "data": "BootstrapVersion"
           }
         ],
-        "/StageDReactStack/CheckBootstrapVersion": [
+        "/StageEReactApiStack/CheckBootstrapVersion": [
           {
             "type": "aws:cdk:logicalId",
             "data": "CheckBootstrapVersion"
           }
         ]
       },
-      "displayName": "StageDReactStack"
+      "displayName": "StageEReactApiStack"
     },
     "Tree": {
       "type": "cdk:tree",

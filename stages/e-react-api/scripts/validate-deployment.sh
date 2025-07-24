@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # validate-deployment.sh
-# Comprehensive validation for Stage D React deployment
-# Tests React application functionality, CloudFront distribution, and integration with previous stages
+# Comprehensive validation for Stage E React API deployment
+# Tests React application functionality, CloudFront distribution, API integration, and integration with previous stages
 
 set -euo pipefail
 
@@ -11,8 +11,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STAGE_DIR="$(dirname "$SCRIPT_DIR")"
 DATA_DIR="$STAGE_DIR/data"
 
-echo "=== Stage D React Deployment - Deployment Validation ==="
-echo "This script will comprehensively validate the React application deployment."
+echo "=== Stage E React API Deployment - Deployment Validation ==="
+echo "This script will comprehensively validate the React API application deployment."
 echo
 
 # Function to validate required files exist
@@ -572,7 +572,7 @@ EOF
 
 # Main validation execution
 main() {
-    echo "Starting comprehensive Stage D React deployment validation..."
+    echo "Starting comprehensive Stage E React API deployment validation..."
     echo
     
     # Validate prerequisites

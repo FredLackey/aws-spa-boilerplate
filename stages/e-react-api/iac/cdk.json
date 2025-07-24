@@ -107,6 +107,19 @@
     "@aws-cdk/aws-s3:publicAccessBlockedByDefault": true,
     "@aws-cdk/aws-lambda:useCdkManagedLogGroup": true,
     "stage-d-react:primaryDomain": "sbx.briskhaven.com",
-    "stage-d-react:lambdaFunctionUrl": "https://ljol5hyg76f3amvxxzdjfta5vi0cpqjv.lambda-url.us-east-1.on.aws/"
+    "stage-d-react:lambdaFunctionUrl": "https://ljol5hyg76f3amvxxzdjfta5vi0cpqjv.lambda-url.us-east-1.on.aws/",
+    "stage-e-react-api:distributionPrefix": "hellospa",
+    "stage-e-react-api:targetRegion": "us-east-1",
+    "stage-e-react-api:targetProfile": "bh-fred-sandbox",
+    "stage-e-react-api:infrastructureProfile": "bh-infra",
+    "stage-e-react-api:targetAccountId": "415730361381",
+    "stage-e-react-api:infrastructureAccountId": "953082249352",
+    "stage-e-react-api:targetVpcId": "vpc-0f59afe5908b84a1a",
+    "stage-e-react-api:distributionId": "E3Q3IZJ1UV53QK",
+    "stage-e-react-api:bucketName": "hellospa-content-415730361381",
+    "stage-e-react-api:primaryDomain": "sbx.briskhaven.com",
+    "stage-e-react-api:certificateArn": "arn:aws:acm:us-east-1:415730361381:certificate/ccb55cf0-2900-448b-8abe-30e127819805",
+    "stage-e-react-api:lambdaFunctionArn": "arn:aws:lambda:us-east-1:415730361381:function:hellospa-api",
+    "stage-e-react-api:lambdaFunctionUrl": "https://ljol5hyg76f3amvxxzdjfta5vi0cpqjv.lambda-url.us-east-1.on.aws/"
   }
 }

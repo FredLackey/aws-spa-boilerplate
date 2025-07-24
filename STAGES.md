@@ -2,7 +2,7 @@
 # Stages
 
 ## Stage A : Hello World HTML Distribution in CloudFront
-- request target account profile for aws cli (ie fred-sandbox)
+- request target account profile for aws cli (ie youraccount)
 - request distribution prefix to be used with all other resource paths
 - deploy static site / page into cloudfront with a new distribution
 - test deployment
